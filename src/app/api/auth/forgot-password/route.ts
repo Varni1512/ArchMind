@@ -62,7 +62,10 @@ export async function POST(req: Request) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    // Send email asynchronously so the user doesn't have to wait 6-8 seconds
+    transporter.sendMail(mailOptions).catch((err) => {
+      console.error('Background email sending failed:', err);
+    });
 
     return NextResponse.json(
       { message: 'If an account with that email exists, we sent an OTP to it.' },
