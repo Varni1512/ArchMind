@@ -1,7 +1,23 @@
+'use client';
+
 import React from "react";
 import { Reveal } from "../ui/Reveal";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export function Hero() {
+  const { user, openAuthModal } = useAuth();
+  const router = useRouter();
+
+  const handleStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      openAuthModal('login');
+    }
+  };
+
   return (
     <section className="pt-[120px] pb-20 relative">
       <div className="w-full max-w-7xl mx-auto px-8">
@@ -42,12 +58,12 @@ export function Hero() {
             </Reveal>
             <Reveal delay={0.4}>
               <div className="flex items-center gap-4 flex-wrap mb-5">
-                <a
-                  href="#"
-                  className="inline-flex items-center justify-center gap-2 font-heading font-semibold whitespace-nowrap transition-all duration-250 ease-[cubic-bezier(.2,.8,.2,1)] border-[1.5px] border-transparent text-surface bg-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_24px_-10px_rgba(53,66,89,0.55)] hover:-translate-y-[2px] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_30px_-10px_rgba(53,66,89,0.6)] px-[28px] py-[16px] text-[15.5px] rounded-[12px] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
+                <button
+                  onClick={handleStart}
+                  className="cursor-pointer inline-flex items-center justify-center gap-2 font-heading font-semibold whitespace-nowrap transition-all duration-250 ease-[cubic-bezier(.2,.8,.2,1)] border-[1.5px] border-transparent text-surface bg-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_24px_-10px_rgba(53,66,89,0.55)] hover:-translate-y-[2px] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_30px_-10px_rgba(53,66,89,0.6)] px-[28px] py-[16px] text-[15.5px] rounded-[12px] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
                 >
                   Start Designing Free
-                </a>
+                </button>
               </div>
             </Reveal>
             <Reveal delay={0.5}>

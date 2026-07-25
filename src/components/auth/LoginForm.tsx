@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export function LoginForm() {
   const { setUser, setAuthModalView, closeAuthModal } = useAuth();
+  const router = useRouter();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,6 +35,7 @@ export function LoginForm() {
       if (res.ok) {
         setUser(data.user);
         closeAuthModal();
+        router.push('/dashboard');
       } else {
         setError(data.message || 'Login failed');
       }
