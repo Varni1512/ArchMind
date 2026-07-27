@@ -1,11 +1,17 @@
-import React from "react";
+'use client';
+
+import React, { useState } from "react";
 import { LogoIcon } from "../icons/LogoIcon";
+import { FeedbackModal } from "../ui/FeedbackModal";
 
 const footerLink =
   "text-[14px] opacity-70 hover:opacity-100 hover:translate-x-1 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary focus-visible:rounded-md";
 
 export function Footer() {
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
   return (
+    <>
     <footer className="pt-16 pb-8 border-t border-primary/10">
       <div className="w-full max-w-7xl mx-auto px-8">
         <div className="grid grid-cols-1 max-[820px]:grid-cols-2 min-[821px]:grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 mb-14">
@@ -30,25 +36,25 @@ export function Footer() {
 
             <ul className="flex flex-col gap-3">
               <li>
-                <a href="#learn" className={footerLink}>
+                <a href="/dashboard" className={footerLink}>
                   Learn
                 </a>
               </li>
 
               <li>
-                <a href="#practice" className={footerLink}>
+                <a href="/dashboard/ai-generator" className={footerLink}>
                   Practice
                 </a>
               </li>
 
               <li>
-                <a href="#design" className={footerLink}>
+                <a href="/dashboard/canvas" className={footerLink}>
                   Design
                 </a>
               </li>
 
               <li>
-                <a href="#interview" className={footerLink}>
+                <a href="/dashboard/interview" className={footerLink}>
                   Interview
                 </a>
               </li>
@@ -63,26 +69,26 @@ export function Footer() {
 
             <ul className="flex flex-col gap-3">
               <li>
-                <a href="#" className={footerLink}>
+                <a href="https://github.com/donnemartin/system-design-primer" target="_blank" rel="noopener noreferrer" className={footerLink}>
                   Documentation
                 </a>
               </li>
 
               <li>
-                <a href="#" className={footerLink}>
+                <a href="http://highscalability.com/" target="_blank" rel="noopener noreferrer" className={footerLink}>
                   Case Studies
                 </a>
               </li>
 
               <li>
-                <a href="#" className={footerLink}>
+                <a href="https://roadmap.sh/system-design" target="_blank" rel="noopener noreferrer" className={footerLink}>
                   Roadmap
                 </a>
               </li>
 
               <li>
-                <a href="#" className={footerLink}>
-                  Release Notes
+                <a href="https://blog.bytebytego.com/" target="_blank" rel="noopener noreferrer" className={footerLink}>
+                  System Design Blog
                 </a>
               </li>
             </ul>
@@ -97,7 +103,7 @@ export function Footer() {
             <ul className="flex flex-col gap-3">
               <li>
                 <a
-                  href="https://github.com/"
+                  href="https://github.com/Varni1512"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={footerLink}
@@ -108,7 +114,7 @@ export function Footer() {
 
               <li>
                 <a
-                  href="https://linkedin.com/"
+                  href="https://www.linkedin.com/in/varnikumarpatel"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={footerLink}
@@ -118,15 +124,18 @@ export function Footer() {
               </li>
 
               <li>
-                <a href="mailto:hello@archmind.dev" className={footerLink}>
+                <a href="mailto:varni1505@gmail.com" className={footerLink}>
                   Contact
                 </a>
               </li>
 
               <li>
-                <a href="#" className={footerLink}>
+                <button 
+                  onClick={() => setIsFeedbackOpen(true)} 
+                  className={footerLink}
+                >
                   Feedback
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -141,5 +150,7 @@ export function Footer() {
         </div>
       </div>
     </footer>
+    <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+    </>
   );
 }
