@@ -24,7 +24,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-[18px]">
           {loading ? (
-            <div className="h-9 w-20 animate-pulse bg-slate-200 rounded-[10px]" />
+            <div className="h-9 w-20 opacity-0" />
           ) : user ? (
             <div className="relative">
               <button

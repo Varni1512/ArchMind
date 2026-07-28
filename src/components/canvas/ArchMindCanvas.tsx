@@ -72,7 +72,24 @@ export default function ArchMindCanvas({ onAPI }: Props) {
         .excalidraw .sidebar-trigger,
         .excalidraw [data-testid="sidebar-trigger"],
         .excalidraw [aria-label="Library"],
-        .excalidraw .layer-ui__library-button {
+        .excalidraw .layer-ui__library-button,
+        .excalidraw .layer-ui__wrapper button[title*="Help"],
+        .excalidraw .layer-ui__wrapper button[aria-label*="Help"],
+        .excalidraw .layer-ui__wrapper [data-testid="help-menu"],
+        .excalidraw .layer-ui__wrapper label[title*="Lock"],
+        .excalidraw .layer-ui__wrapper label[title*="Keep"],
+        .excalidraw .layer-ui__wrapper [aria-label*="Lock"],
+        .excalidraw .layer-ui__wrapper [aria-label*="Keep"],
+        .excalidraw .layer-ui__wrapper [data-testid="toggle-lock"],
+        .excalidraw .layer-ui__wrapper label[title*="Hand"],
+        .excalidraw .layer-ui__wrapper [aria-label*="Hand"],
+        .excalidraw .layer-ui__wrapper [data-testid="toolbar-hand"],
+        .excalidraw .layer-ui__wrapper button[aria-label*="More"],
+        .excalidraw .layer-ui__wrapper button[aria-label*="Shapes"],
+        .excalidraw .layer-ui__wrapper button[title*="Shapes"],
+        .excalidraw .layer-ui__wrapper button[title*="More tools"],
+        .excalidraw .layer-ui__wrapper [aria-label="More tools"],
+        .excalidraw .layer-ui__wrapper [data-testid="toolbar-more-tools"] {
           display: none !important;
         }
 
