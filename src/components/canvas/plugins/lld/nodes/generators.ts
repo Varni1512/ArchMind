@@ -197,7 +197,7 @@ export function generateObjectNode(x: number, y: number, name: string = "object1
 
 // --- SEQUENCE & USE CASE DIAGRAM ---
 
-export function generateActorNode(x: number, y: number) {
+export function generateActorNode(x: number, y: number, name: string = "Actor") {
   const groupId = generateId();
   const elements = [];
   const customData = { diagramType: 'Sequence/UseCase Diagram', nodeType: 'Actor' };
@@ -226,7 +226,7 @@ export function generateActorNode(x: number, y: number) {
   elements.push(createLine(centerX, bodyBottom, legSpan / 2, legSpan, { groupIds: [groupId] }));
 
   // Label
-  elements.push(createText(centerX, bodyBottom + legSpan + 15, "Actor", {
+  elements.push(createText(centerX, bodyBottom + legSpan + 15, name, {
     groupIds: [groupId],
     fontSize: 16,
     fontFamily: 1,
