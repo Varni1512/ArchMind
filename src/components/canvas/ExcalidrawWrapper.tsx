@@ -16,10 +16,10 @@ const ArchMindCanvas = dynamic(
   }
 );
 
-export default function ExcalidrawWrapper() {
+export default function ExcalidrawWrapper({ onAPI }: { onAPI?: (api: any) => void }) {
   return (
     <div className="w-full h-full excalidraw-archmind-theme">
-      <ArchMindCanvas />
+      <ArchMindCanvas onAPI={onAPI} />
       <style dangerouslySetInnerHTML={{__html: `
         .excalidraw-archmind-theme {
           --color-bg-canvas: #faf9f6 !important;
@@ -32,29 +32,29 @@ export default function ExcalidrawWrapper() {
           --font-family: var(--font-inter) !important;
         }
 
-        /* Hide unused vendor UI elements */
+        /* Hide unused vendor UI elements (Library, Help, Lock, Hand, Shapes) */
         .excalidraw .layer-ui__wrapper .help-icon,
         .excalidraw .layer-ui__wrapper button[title*="Help"],
         .excalidraw .layer-ui__wrapper button[aria-label*="Help"],
-        .excalidraw .layer-ui__wrapper [data-testid="help-menu"] {
-          display: none !important;
-        }
-
+        .excalidraw .layer-ui__wrapper [data-testid="help-menu"],
         .excalidraw .layer-ui__wrapper .sidebar-trigger,
         .excalidraw .layer-ui__wrapper button[title*="Library"],
         .excalidraw .layer-ui__wrapper button[aria-label*="Library"],
         .excalidraw .layer-ui__wrapper [data-testid="library-button"],
-        .excalidraw .layer-ui__wrapper .library-menu-control {
-          display: none !important;
-        }
-
-        /* Hide vendor shape flyout tools */
+        .excalidraw .layer-ui__wrapper .library-menu-control,
+        .excalidraw .layer-ui__wrapper label[title*="Lock"],
+        .excalidraw .layer-ui__wrapper label[title*="Keep"],
+        .excalidraw .layer-ui__wrapper [aria-label*="Lock"],
+        .excalidraw .layer-ui__wrapper [aria-label*="Keep"],
+        .excalidraw .layer-ui__wrapper [data-testid="toggle-lock"],
+        .excalidraw .layer-ui__wrapper label[title*="Hand"],
+        .excalidraw .layer-ui__wrapper [aria-label*="Hand"],
+        .excalidraw .layer-ui__wrapper [data-testid="toolbar-hand"],
         .excalidraw .layer-ui__wrapper button[aria-label*="More"],
-        .excalidraw .layer-ui__wrapper button[aria-label*="More tools"],
-        .excalidraw .layer-ui__wrapper button[title*="More"],
-        .excalidraw .layer-ui__wrapper [data-testid="toolbar-more-tools"],
         .excalidraw .layer-ui__wrapper button[aria-label*="Shapes"],
-        .excalidraw .layer-ui__wrapper button[title*="Shapes"] {
+        .excalidraw .layer-ui__wrapper [title*="Shapes"],
+        .excalidraw .layer-ui__wrapper [aria-label="More tools"],
+        .excalidraw .layer-ui__wrapper [data-testid="toolbar-more-tools"] {
           display: none !important;
         }
       `}} />

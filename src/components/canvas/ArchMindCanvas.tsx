@@ -2,7 +2,19 @@ import React, { useEffect } from 'react';
 import { Excalidraw, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 
-export default function ArchMindCanvas() {
+interface Props {
+  onAPI?: (api: any) => void;
+}
+
+const UI_OPTIONS = {
+  canvasActions: {
+    loadScene: false,
+    export: { saveFileToDisk: true },
+    toggleTheme: true,
+  }
+};
+
+export default function ArchMindCanvas({ onAPI }: Props) {
   /**
    * Registers a global listener to ensure that active radix-ui popovers 
    * are properly dismissed when interacting with the canvas element.
@@ -23,14 +35,10 @@ export default function ArchMindCanvas() {
     <Excalidraw 
       theme="light"
       name="ArchMind Canvas"
+      excalidrawAPI={onAPI}
+      initialData={{ appState: { viewBackgroundColor: "#fffce8" } }}
       // UIOptions allows us to aggressively hide their default floating panels
-      UIOptions={{
-        canvasActions: {
-          loadScene: false, // Hides the folder icon
-          export: { saveFileToDisk: true },
-          toggleTheme: true, // We can keep their dark mode toggle or remove it
-        }
-      }}
+      UIOptions={UI_OPTIONS}
     >
       {/* Custom Main Menu Configuration */}
       <MainMenu>
@@ -58,6 +66,21 @@ export default function ArchMindCanvas() {
           </WelcomeScreen.Center.Heading>
         </WelcomeScreen.Center>
       </WelcomeScreen>
+
+      {/* CSS to hide Excalidraw's internal Library and Sidebar buttons that overlap with our custom UI */}
+      <style>{`
+        .excalidraw .sidebar-trigger,
+        .excalidraw [data-testid="sidebar-trigger"],
+        .excalidraw [aria-label="Library"],
+        .excalidraw .layer-ui__library-button {
+          display: none !important;
+        }
+
+        /* Push Excalidraw's left menu to the right to make room for our Explorer button */
+        .excalidraw .App-menu_top__left {
+          margin-left: 56px !important;
+        }
+      `}</style>
     </Excalidraw>
   );
 }
