@@ -93,7 +93,7 @@ export function LLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
             {onClose && (
               <button 
                 onClick={onClose}
-                className="p-1.5 text-primary/60 hover:text-primary-ink hover:bg-primary/10 rounded-lg transition-colors shrink-0"
+                className="p-1.5 text-primary/60 hover:text-primary-ink hover:bg-primary/10 rounded-lg transition-colors shrink-0 cursor-pointer"
                 aria-label="Close Assistant"
                 title="Close Assistant"
               >
@@ -141,7 +141,7 @@ export function LLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
               <button
                 onClick={handleSaveHistory}
                 disabled={isSaving || saveSuccess}
-                className="bg-white border border-primary/10 hover:bg-primary/5 text-primary-ink px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="bg-white border border-primary/10 hover:bg-primary/5 text-primary-ink px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
               >
                 {isSaving ? <Loader2 size={16} className="animate-spin" /> : 
                  saveSuccess ? <Check size={16} className="text-green-500" /> : 
@@ -380,7 +380,7 @@ export function LLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
                 <span className="text-[10px] text-primary/40">AI can make mistakes. Verify important details.</span>
                 <button 
                   onClick={clearChat}
-                  className="text-[10px] text-primary/60 hover:text-red-500 flex items-center gap-1 transition-colors"
+                  className="text-[10px] text-primary/60 hover:text-red-500 flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <Trash2 size={12} /> Clear Chat
                 </button>

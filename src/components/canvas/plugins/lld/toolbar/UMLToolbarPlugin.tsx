@@ -230,7 +230,7 @@ function ToolbarButton({ icon, tooltip, isActive, onClick }: { icon: React.React
         e.stopPropagation();
         onClick();
       }}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors group relative ${
+      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors group relative cursor-pointer ${
         isActive 
           ? "bg-primary/10 text-primary-ink" 
           : "text-primary/70 hover:bg-primary/5 hover:text-primary-ink"

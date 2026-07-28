@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { TopNav } from '@/components/dashboard/TopNav';
@@ -22,6 +22,9 @@ export default function DashboardLayout({
     }
   }, [user, loading, router, openAuthModal]);
 
+  const pathname = usePathname();
+  const isMentorPage = pathname.startsWith('/dashboard/mentor');
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -37,8 +40,8 @@ export default function DashboardLayout({
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         
-        <main className="flex-1 overflow-y-auto relative">
-          <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+        <main className={`flex-1 relative ${isMentorPage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          <div className={`mx-auto w-full h-full ${isMentorPage ? '' : 'max-w-7xl p-4 sm:p-6 lg:p-8'}`}>
             {children}
           </div>
         </main>

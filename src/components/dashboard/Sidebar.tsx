@@ -8,7 +8,7 @@ import {
   Sparkles, 
   Component, 
   GitMerge, 
-  Mic, 
+  Bot, 
   PenTool,
   LayoutDashboard,
   ChevronLeft,
@@ -43,9 +43,9 @@ const NAV_ITEMS = [
     exact: false
   },
   {
-    title: 'Mock Interview',
-    href: '/dashboard/interview',
-    icon: Mic,
+    title: 'AI Design Mentor',
+    href: '/dashboard/mentor',
+    icon: Bot,
     exact: false
   },
   {

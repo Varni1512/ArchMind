@@ -24,7 +24,7 @@ export function TopDiagramSwitcher() {
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 bg-white border border-primary/20 px-4 py-2 rounded-xl shadow-md hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 bg-white border border-primary/20 px-4 py-2 rounded-xl shadow-md hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <Network size={16} className="text-primary" />
           <span className="font-semibold text-gray-800 text-sm tracking-wide">
@@ -42,7 +42,7 @@ export function TopDiagramSwitcher() {
                   setActiveDiagramType(type);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
                   activeDiagramType === type 
                     ? 'bg-blue-50 text-blue-700 font-medium' 
                     : 'text-gray-700 hover:bg-gray-50'

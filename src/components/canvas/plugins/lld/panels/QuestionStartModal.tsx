@@ -45,7 +45,7 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
           <h3 className="font-bold text-gray-800 text-lg">Start Practicing</h3>
           <button 
             onClick={() => { setIsStartModalOpen(false); setPendingQuestionId(null); }}
-            className="text-gray-400 hover:text-gray-700 transition-colors"
+            className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -59,7 +59,7 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => handleSelectMode('blank')}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group cursor-pointer"
             >
               <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center text-gray-500 group-hover:text-blue-600 transition-colors">
                 <File size={24} />
@@ -72,7 +72,7 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
 
             <button
               onClick={() => handleSelectMode('template')}
-              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all group"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all group cursor-pointer"
             >
               <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center text-gray-500 group-hover:text-purple-600 transition-colors">
                 <FilePlus size={24} />

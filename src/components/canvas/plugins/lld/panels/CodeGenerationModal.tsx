@@ -112,7 +112,7 @@ export function CodeGenerationModal({ excalidrawAPI, diagramType, onClose }: Pro
 
             <button 
               onClick={onClose}
-              className="p-2 text-primary/60 hover:text-primary-ink hover:bg-primary/10 rounded-lg transition-colors ml-2"
+              className="p-2 text-primary/60 hover:text-primary-ink hover:bg-primary/10 rounded-lg transition-colors ml-2 cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -148,7 +148,7 @@ export function CodeGenerationModal({ excalidrawAPI, diagramType, onClose }: Pro
                 <span className="text-xs font-mono text-white/60">{language} output</span>
                 <button 
                   onClick={handleCopy}
-                  className="text-white/60 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium"
+                  className="text-white/60 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
                 >
                   {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                   {copied ? 'Copied' : 'Copy'}

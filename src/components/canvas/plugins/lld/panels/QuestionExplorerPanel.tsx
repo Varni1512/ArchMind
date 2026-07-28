@@ -60,7 +60,7 @@ export function QuestionExplorerPanel() {
                 <div key={difficulty} className="border-b border-gray-100 last:border-b-0">
                   <button 
                     onClick={() => toggleCategory(difficulty)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-gray-100 transition-colors bg-white"
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-100 transition-colors bg-white cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       {isExpanded ? <ChevronDown size={18} className="text-gray-400" /> : <ChevronRight size={18} className="text-gray-400" />}
@@ -79,7 +79,7 @@ export function QuestionExplorerPanel() {
                           <button
                             key={q.id}
                             onClick={() => handleSelectQuestion(q.id)}
-                            className="w-full text-left px-10 py-3 text-sm transition-all flex items-center justify-between group hover:bg-blue-50/50 border-l-2 border-transparent hover:border-blue-500"
+                            className="w-full text-left px-10 py-3 text-sm transition-all flex items-center justify-between group hover:bg-blue-50/50 border-l-2 border-transparent hover:border-blue-500 cursor-pointer"
                           >
                             <span className="font-medium text-gray-700 group-hover:text-blue-700 truncate pr-2">{q.title}</span>
                             {progress === 'Completed' && <CheckCircle2 size={16} className="text-green-500 shrink-0" />}
@@ -99,7 +99,7 @@ export function QuestionExplorerPanel() {
           <div className="p-4 border-b border-gray-100 flex items-center gap-3 bg-white sticky top-0 z-10 shadow-sm">
             <button 
               onClick={() => setActiveQuestionId(null)}
-              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-800 transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
               title="Back to List"
             >
               <ArrowLeft size={20} />
