@@ -17,32 +17,141 @@ export class ASTEngine {
   public static parseFromCanvas(elements: readonly any[]): UMLAST {
     const nodes: UMLNode[] = [];
     const edges: UMLEdge[] = [];
-
-    // In Excalidraw, a semantic UML Class is represented as a group of shapes.
-    // We expect the 'parent' container of a UML node to have customData.umlNode
     const processedGroups = new Set<string>();
 
+    console.log("[AST Engine] Starting parsing on", elements.length, "elements.");
+
+    // 1. First Pass: Extract Nodes from groups
     elements.forEach(el => {
-      // 1. Check for Node
       if (el.groupIds && el.groupIds.length > 0) {
         const topLevelGroupId = el.groupIds[el.groupIds.length - 1];
         
         if (!processedGroups.has(topLevelGroupId)) {
-          // If this element has our custom structured data, it's a UML Node
-          if (el.customData && el.customData.umlNode) {
-            nodes.push(el.customData.umlNode as UMLNode);
-            processedGroups.add(topLevelGroupId);
+          processedGroups.add(topLevelGroupId);
+          
+          const groupElements = elements.filter(e => e.groupIds?.includes(topLevelGroupId));
+          const dataElement = groupElements.find(e => e.customData?.nodeType);
+          
+          if (dataElement || groupElements.some(e => e.type === 'text')) {
+            const texts = groupElements.filter(e => e.type === 'text').map(e => e.text);
+            
+            let name = "Unknown";
+            let stereotype = "";
+            let attributes: string[] = [];
+            let methods: string[] = [];
+            
+            if (texts.length > 0) {
+              const header = texts[0].split('\n');
+              if (header[0].startsWith('<<') && header.length > 1) {
+                stereotype = header[0];
+                name = header[1];
+              } else {
+                name = header[0];
+              }
+            }
+
+            if (texts.length > 1) {
+              attributes = (texts[1] as string).split('\n').filter((t: string) => t.trim() !== '');
+            }
+            if (texts.length > 2) {
+              methods = (texts[2] as string).split('\n').filter((t: string) => t.trim() !== '');
+            }
+
+            const minX = Math.min(...groupElements.map(e => e.x));
+            const minY = Math.min(...groupElements.map(e => e.y));
+            const maxX = Math.max(...groupElements.map(e => e.x + e.width));
+            const maxY = Math.max(...groupElements.map(e => e.y + e.height));
+
+            const nodeType = dataElement?.customData?.nodeType || stereotype.replace(/[<>]/g, '') || 'Class';
+
+            nodes.push({
+              id: topLevelGroupId,
+              type: nodeType as any,
+              name: name,
+              attributes: attributes as any,
+              methods: methods as any,
+              x: minX,
+              y: minY,
+              width: maxX - minX,
+              height: maxY - minY,
+            });
           }
         }
       }
+    });
 
-      // 2. Check for Edge (Lines/Arrows in Excalidraw)
-      if (el.type === 'arrow' || el.type === 'line') {
-        if (el.customData && el.customData.umlEdge) {
-          edges.push(el.customData.umlEdge as UMLEdge);
+    console.log("[AST Engine] Extracted nodes:", nodes);
+
+    // Spatial heuristic for unbound arrows, prioritizing the tightest bounding box (for nested nodes)
+    const getClosestNodeId = (x: number, y: number) => {
+      let closestId = null;
+      let minArea = Infinity;
+
+      for (const node of nodes) {
+        // Reduced tolerance to 15px to prevent false positives in dense diagrams
+        if (x >= node.x - 15 && x <= node.x + node.width + 15 &&
+            y >= node.y - 15 && y <= node.y + node.height + 15) {
+          const area = node.width * node.height;
+          if (area < minArea) {
+            minArea = area;
+            closestId = node.id;
+          }
         }
       }
+      return closestId;
+    };
+
+    // 2. Second Pass: Extract Edges from arrows
+    elements.forEach(el => {
+      if (el.type === 'arrow' || el.type === 'line') {
+        let edgeType: string = 'Association';
+        
+        if (el.strokeStyle === 'dashed') {
+          if (el.endArrowhead === 'triangle_outline' || el.endArrowhead === 'triangle') edgeType = 'Realization';
+          else edgeType = 'Dependency';
+        } else {
+          if (el.startArrowhead === 'diamond') edgeType = 'Composition';
+          else if (el.startArrowhead === 'diamond_outline') edgeType = 'Aggregation';
+          else if (el.endArrowhead === 'triangle_outline' || el.endArrowhead === 'triangle') edgeType = 'Inheritance';
+          else edgeType = 'Association';
+        }
+
+        const startBinding = el.startBinding?.elementId;
+        const endBinding = el.endBinding?.elementId;
+
+        let sourceId = startBinding;
+        let targetId = endBinding;
+
+        if (startBinding) {
+          const boundEl = elements.find(e => e.id === startBinding);
+          if (boundEl?.groupIds?.length > 0) sourceId = boundEl.groupIds[boundEl.groupIds.length - 1];
+        }
+        if (endBinding) {
+          const boundEl = elements.find(e => e.id === endBinding);
+          if (boundEl?.groupIds?.length > 0) targetId = boundEl.groupIds[boundEl.groupIds.length - 1];
+        }
+
+        if (!sourceId) {
+          sourceId = getClosestNodeId(el.x, el.y);
+        }
+        
+        if (!targetId && el.points && el.points.length > 0) {
+          const lastPoint = el.points[el.points.length - 1];
+          const targetX = el.x + lastPoint[0];
+          const targetY = el.y + lastPoint[1];
+          targetId = getClosestNodeId(targetX, targetY);
+        }
+
+        edges.push({
+          id: el.id,
+          type: edgeType as any,
+          sourceId: sourceId || 'unbound',
+          targetId: targetId || 'unbound',
+        });
+      }
     });
+
+    console.log("[AST Engine] Extracted edges:", edges);
 
     return { nodes, edges };
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DiagramType, QuestionProgress, ProgressStatus } from '../types';
+import { DiagramType, QuestionProgress, ProgressStatus, Question } from '../types';
 import { mockQuestions } from '../data/mockQuestions';
 
 interface LLDWorkspaceState {
@@ -15,6 +15,9 @@ interface LLDWorkspaceState {
   setIsStartModalOpen: (open: boolean) => void;
   pendingQuestionId: string | null;
   setPendingQuestionId: (id: string | null) => void;
+  currentQuestion: Question | null;
+  loadedHistory: any | null;
+  setLoadedHistory: (history: any | null) => void;
 }
 
 const LLDWorkspaceContext = createContext<LLDWorkspaceState | null>(null);
@@ -27,6 +30,9 @@ export function LLDWorkspaceProvider({ children }: { children: React.ReactNode }
   // Start Modal flow
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
   const [pendingQuestionId, setPendingQuestionId] = useState<string | null>(null);
+  
+  // History Loading flow
+  const [loadedHistory, setLoadedHistory] = useState<any | null>(null);
 
   // Load progress from local storage on mount
   useEffect(() => {
@@ -61,6 +67,8 @@ export function LLDWorkspaceProvider({ children }: { children: React.ReactNode }
     }
   }, [activeQuestionId]);
 
+  const currentQuestion = activeQuestionId ? mockQuestions.find(q => q.id === activeQuestionId) || null : null;
+
   return (
     <LLDWorkspaceContext.Provider value={{
       activeDiagramType,
@@ -72,7 +80,10 @@ export function LLDWorkspaceProvider({ children }: { children: React.ReactNode }
       isStartModalOpen,
       setIsStartModalOpen,
       pendingQuestionId,
-      setPendingQuestionId
+      setPendingQuestionId,
+      currentQuestion,
+      loadedHistory,
+      setLoadedHistory
     }}>
       {children}
     </LLDWorkspaceContext.Provider>
@@ -86,3 +97,4 @@ export function useLLDWorkspace() {
   }
   return context;
 }
+
