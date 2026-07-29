@@ -18,7 +18,6 @@ export async function POST(req: Request) {
     const groq = createOpenAI({
       baseURL: 'https://api.groq.com/openai/v1',
       apiKey,
-      compatibility: 'compatible'
     });
 
     // Use llama-3.2-90b-vision-preview if there are images, otherwise standard Llama 3.3 70b
