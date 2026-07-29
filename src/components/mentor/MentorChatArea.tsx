@@ -112,10 +112,11 @@ export function MentorChatArea() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch response');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch response');
       }
 
-      if (!response.body) throw new Error('No body');
+      if (!response.body) throw new Error('No response body from server');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');

@@ -20,8 +20,16 @@ export async function POST(req: Request) {
       apiKey,
     });
 
-    // Use llama-3.2-90b-vision-preview if there are images, otherwise standard Llama 3.3 70b
-    const modelName = hasImages ? 'llama-3.2-90b-vision-preview' : 'llama-3.3-70b-versatile';
+    // Groq has decommissioned all vision models from their public API.
+    // If the user tries to upload an image, we must explicitly reject it with a clear message.
+    if (hasImages) {
+      return NextResponse.json(
+        { error: 'Groq API no longer supports image processing (Vision models decommissioned). Please ask text-only questions.' },
+        { status: 400 }
+      );
+    }
+
+    const modelName = 'llama-3.3-70b-versatile';
 
     const systemMessages = messages.filter((m: any) => m.role === 'system').map((m: any) => m.content).join('\n\n');
     const userAndAssistantMessages = messages.filter((m: any) => m.role !== 'system');

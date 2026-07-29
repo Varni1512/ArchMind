@@ -55,15 +55,8 @@ export function MentorInput({ onSend, isStreaming, onStop }: MentorInputProps) {
 
   const processFile = async (file: File) => {
     if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        addAttachment({
-          type: 'image',
-          fileName: file.name,
-          url: e.target?.result as string
-        });
-      };
-      reader.readAsDataURL(file);
+      alert('Image upload is temporarily disabled as Groq has decommissioned their Vision models.');
+      return;
     } else if (file.type === 'application/pdf') {
       const formData = new FormData();
       formData.append('file', file);
@@ -97,8 +90,12 @@ export function MentorInput({ onSend, isStreaming, onStop }: MentorInputProps) {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     if (e.clipboardData.files.length > 0) {
-      e.preventDefault();
-      Array.from(e.clipboardData.files).forEach(processFile);
+      // Only process pdfs on paste, ignore images
+      const files = Array.from(e.clipboardData.files).filter(f => !f.type.startsWith('image/'));
+      if (files.length > 0) {
+        e.preventDefault();
+        files.forEach(processFile);
+      }
     }
   };
 
@@ -133,23 +130,6 @@ export function MentorInput({ onSend, isStreaming, onStop }: MentorInputProps) {
         onDrop={handleDrop}
         className="relative flex items-end gap-2 bg-white border border-primary/20 shadow-sm rounded-2xl p-2 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 transition-all"
       >
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          className="hidden" 
-          multiple 
-          accept="image/*,.pdf" 
-          onChange={handleFileChange} 
-        />
-        
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          className="p-2.5 text-primary/50 hover:text-primary-ink hover:bg-primary/5 rounded-xl transition-colors mb-0.5 cursor-pointer"
-          title="Attach files or images"
-        >
-          <Paperclip size={20} />
-        </button>
-
         <div className="relative mb-0.5">
           <button 
             onClick={() => setShowModeDropdown(!showModeDropdown)}
@@ -197,7 +177,7 @@ export function MentorInput({ onSend, isStreaming, onStop }: MentorInputProps) {
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Ask a System Design question or paste an image..."
+          placeholder="Ask a System Design question or attach a PDF..."
           className="flex-1 max-h-[200px] bg-transparent resize-none py-2.5 outline-none text-primary-ink text-sm md:text-base custom-scrollbar"
           rows={1}
         />
