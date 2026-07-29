@@ -25,15 +25,9 @@ const NAV_ITEMS = [
     exact: true
   },
   {
-    title: 'AI Design Generator',
-    href: '/dashboard/ai-generator',
-    icon: Sparkles,
-    exact: false
-  },
-  {
-    title: 'HLD Practice',
-    href: '/dashboard/hld',
-    icon: Component,
+    title: 'Blank Canvas',
+    href: '/dashboard/canvas',
+    icon: PenTool,
     exact: false
   },
   {
@@ -43,15 +37,21 @@ const NAV_ITEMS = [
     exact: false
   },
   {
-    title: 'AI Design Mentor',
-    href: '/dashboard/mentor',
-    icon: Bot,
+    title: 'HLD Practice',
+    href: '/dashboard/hld',
+    icon: Component,
     exact: false
   },
   {
-    title: 'Blank Canvas',
-    href: '/dashboard/canvas',
-    icon: PenTool,
+    title: 'AI Design Generator',
+    href: '/dashboard/ai-generator',
+    icon: Sparkles,
+    exact: false
+  },
+  {
+    title: 'AI Design Mentor',
+    href: '/dashboard/mentor',
+    icon: Bot,
     exact: false
   }
 ];

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import { 
@@ -27,13 +27,13 @@ const CARDS = [
     badge: 'Recommended'
   },
   {
-    title: 'AI Design Generator',
-    description: 'Generate complete HLD and LLD designs using natural language.',
-    icon: Sparkles,
-    href: '/dashboard/ai-generator',
-    buttonText: 'Start Designing',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    title: 'LLD Practice',
+    description: 'Practice object-oriented system design with UML diagrams.',
+    icon: GitMerge,
+    href: '/dashboard/lld',
+    buttonText: 'Start Practice',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100'
   },
   {
     title: 'HLD Practice',
@@ -45,20 +45,20 @@ const CARDS = [
     bgColor: 'bg-blue-100'
   },
   {
-    title: 'LLD Practice',
-    description: 'Practice object-oriented system design with UML diagrams.',
-    icon: GitMerge,
-    href: '/dashboard/lld',
-    buttonText: 'Start Practice',
-    color: 'text-green-600',
-    bgColor: 'bg-green-100'
+    title: 'AI Design Generator',
+    description: 'Generate complete HLD and LLD designs using natural language.',
+    icon: Sparkles,
+    href: '/dashboard/ai-generator',
+    buttonText: 'Start Designing',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100'
   },
   {
-    title: 'Mock Interview',
-    description: 'Prepare for system design interviews with AI.',
+    title: 'AI Design Mentor',
+    description: 'Get guidance and prepare for system design interviews with your AI Mentor.',
     icon: Mic,
-    href: '/dashboard/interview',
-    buttonText: 'Start Interview',
+    href: '/dashboard/mentor',
+    buttonText: 'Open Mentor',
     color: 'text-orange-600',
     bgColor: 'bg-orange-100'
   }
@@ -100,14 +100,14 @@ export default function DashboardHome() {
         >
           <Link
             href="/dashboard/ai-generator"
-            className="inline-flex items-center justify-center gap-2 font-heading font-semibold transition-all duration-250 border-[1.5px] border-primary/15 text-primary bg-bg hover:bg-primary/5 px-[16px] py-[10px] text-[13.5px] rounded-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary cursor-pointer shadow-sm hover:shadow"
+            className="inline-flex items-center justify-center gap-2 font-heading font-semibold transition-all duration-250 border-[1.5px] border-primary/15 text-primary bg-bg hover:bg-primary/5 px-[16px] py-[10px] text-[13px] rounded-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary cursor-pointer shadow-sm hover:shadow"
           >
             <Sparkles size={16} />
             Start with AI
           </Link>
           <Link
             href="/dashboard/canvas"
-            className="inline-flex items-center justify-center gap-2 font-heading font-semibold transition-all duration-250 border-[1.5px] border-transparent text-surface bg-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_14px_-6px_rgba(53,66,89,0.4)] hover:-translate-y-[1px] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_20px_-6px_rgba(53,66,89,0.5)] px-[18px] py-[10px] text-[13.5px] rounded-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 font-heading font-semibold transition-all duration-250 border-[1.5px] border-transparent text-surface bg-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_14px_-6px_rgba(53,66,89,0.4)] hover:-translate-y-[1px] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_20px_-6px_rgba(53,66,89,0.5)] px-[18px] py-[10px] text-[13px] rounded-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary cursor-pointer"
           >
             <PenTool size={16} />
             Open Canvas
@@ -158,35 +158,6 @@ export default function DashboardHome() {
               </motion.div>
             );
           })}
-        </div>
-      </section>
-
-      {/* Recent Designs Section */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading font-bold text-[19px] text-primary-ink">Recent Designs</h2>
-        </div>
-        
-        <div className="bg-surface border border-primary/10 border-dashed rounded-[16px] p-10 flex flex-col items-center justify-center text-center shadow-[0_2px_10px_rgb(0,0,0,0.01)]">
-          <div className="relative w-16 h-16 mb-4">
-            <div className="absolute inset-0 bg-primary/5 rounded-full animate-pulse" />
-            <div className="absolute inset-0 flex items-center justify-center text-primary/40">
-              <FolderOpen size={28} strokeWidth={1.5} />
-            </div>
-          </div>
-          
-          <h3 className="font-heading font-bold text-[15px] text-primary-ink mb-1.5">No designs yet</h3>
-          <p className="text-[13px] text-primary/60 max-w-sm mb-6 leading-relaxed">
-            Your workspace is empty. Start a new design from scratch or use our AI Generator to get inspired.
-          </p>
-          
-          <Link
-            href="/dashboard/canvas"
-            className="inline-flex items-center justify-center gap-2 font-heading font-semibold transition-all duration-250 border-[1.5px] border-primary/15 text-primary bg-bg hover:bg-primary/5 px-[16px] py-[8.5px] text-[13px] rounded-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary cursor-pointer shadow-sm hover:shadow"
-          >
-            <Plus size={16} />
-            Create your first design
-          </Link>
         </div>
       </section>
     </div>

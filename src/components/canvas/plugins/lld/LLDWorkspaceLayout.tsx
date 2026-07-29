@@ -36,8 +36,16 @@ function WorkspaceContent() {
   // Restore history to canvas when loadedHistory changes
   useEffect(() => {
     if (loadedHistory && excalidrawAPI) {
-      if (loadedHistory.elements && Array.isArray(loadedHistory.elements)) {
-        excalidrawAPI.updateScene({ elements: loadedHistory.elements });
+      if (loadedHistory.elements && Array.isArray(loadedHistory.elements) && loadedHistory.elements.length > 0) {
+        // Add a small delay to ensure Excalidraw's internal state is fully mounted before updating
+        setTimeout(() => {
+          try {
+            excalidrawAPI.updateScene({ elements: loadedHistory.elements });
+            excalidrawAPI.scrollToContent(loadedHistory.elements, { fitToContent: true });
+          } catch (e) {
+            console.error("Error updating excalidraw scene:", e);
+          }
+        }, 100);
       }
       setIsAssistantOpen(true); // Open assistant to view restored evaluation/chat
     }

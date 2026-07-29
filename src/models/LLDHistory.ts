@@ -22,6 +22,10 @@ const LLDHistorySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       required: false,
     },
+    previewImage: {
+      type: String,
+      required: false,
+    },
     chatHistory: {
       type: Array,
       default: [],

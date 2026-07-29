@@ -78,7 +78,18 @@ export function SavedHistoryPanel() {
               </span>
             </div>
             
-            <div className="flex items-center gap-1.5 text-[10px] text-primary/50">
+            {history.previewImage && (
+              <div className="w-full h-32 rounded-lg border border-primary/10 overflow-hidden bg-primary/5 flex items-center justify-center my-1 relative">
+                 <img 
+                    src={history.previewImage} 
+                    alt="Diagram Preview" 
+                    className="w-full h-full object-contain p-1"
+                 />
+                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+              </div>
+            )}
+            
+            <div className="flex items-center gap-1.5 text-[10px] text-primary/50 mt-1">
               <Calendar size={10} />
               {new Date(history.createdAt).toLocaleString()}
             </div>

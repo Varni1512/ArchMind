@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
 
-    const { diagramType, ast, elements, evaluation, chatHistory } = await req.json();
+    const { diagramType, ast, elements, previewImage, evaluation, chatHistory } = await req.json();
 
     if (!diagramType || !ast || !evaluation) {
       return NextResponse.json(
@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       diagramType,
       ast,
       elements,
+      previewImage,
       evaluation,
       chatHistory: chatHistory || [],
     });

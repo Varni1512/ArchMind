@@ -58,13 +58,36 @@ export function LLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
       const rawAST = ASTEngine.parseFromCanvas(elements);
       const optimizedAST = preprocessAST(rawAST, diagramType);
 
+      // Generate preview image
+      let previewImage = '';
+      try {
+        const { exportToBlob } = await import('@excalidraw/excalidraw');
+        const blob = await exportToBlob({
+          elements,
+          appState: { ...excalidrawAPI.getAppState(), exportBackground: true, viewBackgroundColor: '#ffffff' },
+          mimeType: "image/png",
+        });
+        
+        previewImage = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.error('Failed to generate preview image', err);
+      }
+
+      // Serialize elements to drop any non-serializable properties that might be silently dropped by fetch
+      const safeElements = JSON.parse(JSON.stringify(elements));
+
       const response = await fetch('/api/ai/lld-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           diagramType,
           ast: optimizedAST,
-          elements,
+          elements: safeElements,
+          previewImage,
           evaluation,
           chatHistory: messages
         })
