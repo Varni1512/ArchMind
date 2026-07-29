@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Caveat } from 'next/font/google';
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const caveat = Caveat({
@@ -27,6 +28,7 @@ export default function RootLayout({
           {children}
           <AuthModal />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
