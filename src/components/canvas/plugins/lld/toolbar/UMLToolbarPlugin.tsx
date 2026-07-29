@@ -101,7 +101,7 @@ export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
       
       switch (toolId) {
         case 'Association':
-          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: null };
+          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "arrow" };
           break;
         case 'Message':
           updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "triangle" };

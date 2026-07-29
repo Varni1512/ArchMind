@@ -6,7 +6,7 @@ function generateBaseEdge(x: number, y: number, length: number = 150) {
 
 export function generateAssociationEdge(x: number, y: number) {
   const edge = generateBaseEdge(x, y);
-  edge.endArrowhead = null;
+  edge.endArrowhead = "arrow";
   return [edge];
 }
 
@@ -19,27 +19,27 @@ export function generateDependencyEdge(x: number, y: number) {
 
 export function generateInheritanceEdge(x: number, y: number) {
   const edge = generateBaseEdge(x, y);
-  edge.endArrowhead = "triangle"; // unfilled triangle
+  edge.endArrowhead = "triangle_outline"; // unfilled triangle
   return [edge];
 }
 
 export function generateRealizationEdge(x: number, y: number) {
   const edge = generateBaseEdge(x, y);
-  edge.endArrowhead = "triangle";
+  edge.endArrowhead = "triangle_outline";
   edge.strokeStyle = "dashed";
   return [edge];
 }
 
 export function generateAggregationEdge(x: number, y: number) {
   const edge = generateBaseEdge(x, y);
-  edge.startArrowhead = "diamond"; // Unfilled diamond at the start (the aggregate side)
+  edge.startArrowhead = "diamond_outline"; // Unfilled diamond at the start (the aggregate side)
   edge.endArrowhead = null;
   return [edge];
 }
 
 export function generateCompositionEdge(x: number, y: number) {
   const edge = generateBaseEdge(x, y);
-  edge.startArrowhead = "diamond_filled"; // Filled diamond at the start
+  edge.startArrowhead = "diamond"; // Filled diamond at the start
   edge.endArrowhead = null;
   return [edge];
 }
