@@ -17,33 +17,33 @@ export function FeatureGrid() {
         <div className="grid grid-cols-1 max-[900px]:grid-cols-2 min-[900px]:grid-cols-3 gap-5">
           <Reveal delay={0.1} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
             <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Sparkles size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">AI-powered design reviews</h4>
-            <p className="text-[14px] opacity-72">Every diagram gets scored, explained, and challenged — not just rendered.</p>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">1. Blank Canvas Whiteboard</h4>
+            <p className="text-[14px] opacity-72">A distraction-free, lightning-fast Excalidraw whiteboard for raw, unopinionated sketching and brainstorming.</p>
           </Reveal>
           <Reveal delay={0.2} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
-            <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><MousePointer2 size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">Interactive, not passive</h4>
-            <p className="text-[14px] opacity-72">Explore, build, and break architectures instead of watching someone else&apos;s slides.</p>
+            <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Layers size={18} strokeWidth={2.5} /></div>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">2. HLD Architecture Workspace</h4>
+            <p className="text-[14px] opacity-72">Drag and drop 50+ industry-standard cloud components. The AI actively detects bottlenecks and SPOFs in your design.</p>
           </Reveal>
           <Reveal delay={0.3} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
             <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Activity size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">Real simulations</h4>
-            <p className="text-[14px] opacity-72">Send synthetic traffic and simulated failures through your design and watch it respond.</p>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">3. LLD & UML Workspace</h4>
+            <p className="text-[14px] opacity-72">Design classes, interfaces, and methods. The AST engine understands inheritance and grades your SOLID principles.</p>
           </Reveal>
           <Reveal delay={0.4} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
             <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><GraduationCap size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">Beginner to advanced</h4>
-            <p className="text-[14px] opacity-72">Start with fundamentals in Learn, finish defending a design under interview pressure.</p>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">4. AI Design Mentor</h4>
+            <p className="text-[14px] opacity-72">Your personal Principal Engineer living in the sidebar. Context-aware streaming chat and granular evaluation scoring.</p>
           </Reveal>
           <Reveal delay={0.5} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
-            <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Layers size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">HLD + LLD, unified</h4>
-            <p className="text-[14px] opacity-72">Move between system architecture and class-level design without switching tools.</p>
+            <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Sparkles size={18} strokeWidth={2.5} /></div>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold flex items-center gap-2">5. AI Design Generator <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-wider">Coming Soon</span></h4>
+            <p className="text-[14px] opacity-72">Describe a system in plain English and watch ArchMind construct the complete HLD and LLD diagrams instantly.</p>
           </Reveal>
           <Reveal delay={0.6} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
             <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Terminal size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">Built for developers</h4>
-            <p className="text-[14px] opacity-72">Keyboard-first canvas, exportable diagrams, and generated code you can actually read.</p>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">+ Boilerplate Code Gen</h4>
+            <p className="text-[14px] opacity-72">Don't just draw it, build it. Convert your visual LLDs directly into working boilerplate code for your next project.</p>
           </Reveal>
         </div>
       </div>
