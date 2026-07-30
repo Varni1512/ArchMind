@@ -113,21 +113,5 @@ export const mockQuestions: Question[] = [
     ],
     expectedConcepts: ['QuadTree/Geohash', 'WebSockets', 'Microservices', 'Redis'],
     recommendedDiagramType: 'System Architecture'
-  },
-  {
-    id: 'hld-5',
-    title: 'Component Showcase (All)',
-    difficulty: 'Easy',
-    description: 'This is a special showcase template that displays all available HLD components on the canvas at once.',
-    functionalRequirements: [
-      'View all modern system architecture node components.'
-    ],
-    nonFunctionalRequirements: [],
-    constraints: [],
-    hints: [
-      'Zoom out to see all 40+ components laid out in a grid.'
-    ],
-    expectedConcepts: [],
-    recommendedDiagramType: 'System Architecture'
   }
 ];
