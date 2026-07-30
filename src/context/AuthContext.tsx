@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 type User = {
   id: string;
@@ -29,30 +30,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState<AuthModalView>('login');
+  
+  // NextAuth Session Hook
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // First check custom JWT authentication
         const res = await fetch('/api/auth/me');
         if (res.ok) {
           const data = await res.json();
-          setUser(data.user);
-        } else {
+          if (data.user) {
+            setUser(data.user);
+            return;
+          }
+        }
+        
+        // If custom JWT auth fails, check NextAuth session
+        if (session && session.user) {
+          setUser({
+            id: (session.user as any).id || session.user.email || '',
+            name: session.user.name || 'User',
+            email: session.user.email || '',
+          });
+          return;
+        }
+
+        // Neither auth method succeeded
+        setUser(null);
+      } catch (error) {
+        if (!session?.user) {
           setUser(null);
         }
-      } catch (error) {
-        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
-  }, []);
+    if (status !== 'loading') {
+      fetchUser();
+    }
+  }, [session, status]);
 
   const logout = async () => {
     try {
+      // Clear custom JWT token
       await fetch('/api/auth/logout', { method: 'POST' });
+      // Clear NextAuth session (this will trigger a page reload by default)
+      if (session) {
+        await signOut({ redirect: false });
+      }
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);
