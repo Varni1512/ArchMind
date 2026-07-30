@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   description: "ArchMind — AI System Design Copilot",
 };
 
+import NextAuthProvider from "@/components/providers/NextAuthProvider";
+
+// ... existing imports ...
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,10 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className={`${caveat.variable}`}>
-        <AuthProvider>
-          {children}
-          <AuthModal />
-        </AuthProvider>
+        <NextAuthProvider>
+          <AuthProvider>
+            {children}
+            <AuthModal />
+          </AuthProvider>
+        </NextAuthProvider>
         <Analytics />
       </body>
     </html>

@@ -15,9 +15,15 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      required: false, // Optional because OAuth users (Google/Github) won't have a password
       minlength: 6,
       select: false,
+    },
+    image: {
+      type: String, // To store profile pictures from Google/GitHub
+    },
+    emailVerified: {
+      type: Date, // For NextAuth compatibility
     },
     resetPasswordOtp: {
       type: String,

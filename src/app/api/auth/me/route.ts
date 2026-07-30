@@ -12,8 +12,8 @@ export async function GET(req: Request) {
 
     if (!token) {
       return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
+        { user: null, message: 'Not authenticated' },
+        { status: 200 }
       );
     }
 
@@ -35,8 +35,8 @@ export async function GET(req: Request) {
     );
   } catch (error: any) {
     return NextResponse.json(
-      { message: 'Not authenticated' },
-      { status: 401 }
+      { user: null, message: 'Not authenticated' },
+      { status: 200 }
     );
   }
 }
