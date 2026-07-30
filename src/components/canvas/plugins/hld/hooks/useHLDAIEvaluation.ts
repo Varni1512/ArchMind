@@ -147,7 +147,6 @@ export function useHLDAIEvaluation(excalidrawAPI: any, diagramType: string, ques
 
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          console.log('Evaluation aborted by user.');
           return;
         }
 

@@ -1,9 +1,15 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
+import { checkAuth } from '@/lib/auth-check';
 
 export async function POST(req: Request) {
   try {
+    const isAuthenticated = await checkAuth(req);
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { messages, hasImages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {

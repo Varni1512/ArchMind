@@ -30,8 +30,6 @@ export class HLDASTEngine {
     const edges: HLDEdge[] = [];
     const processedGroups = new Set<string>();
 
-    console.log("[HLD AST Engine] Starting parsing on", elements.length, "elements.");
-
     // 1. First Pass: Extract Nodes from groups based on customData
     elements.forEach(el => {
       if (el.groupIds && el.groupIds.length > 0) {
@@ -64,8 +62,6 @@ export class HLDASTEngine {
         }
       }
     });
-
-    console.log("[HLD AST Engine] Extracted nodes:", nodes);
 
     // Spatial heuristic for unbound arrows
     const getClosestNodeId = (x: number, y: number) => {
@@ -126,8 +122,6 @@ export class HLDASTEngine {
         });
       }
     });
-
-    console.log("[HLD AST Engine] Extracted edges:", edges);
 
     return { nodes, edges };
   }

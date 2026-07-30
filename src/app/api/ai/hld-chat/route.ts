@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { GroqProvider } from '@/services/ai/providers/GroqProvider';
 import { getHLDChatPrompt } from '@/services/ai/prompts/HLDChatPrompt';
+import { checkAuth } from '@/lib/auth-check';
 
 export async function POST(req: Request) {
   try {
+    const isAuthenticated = await checkAuth(req);
+    if (!isAuthenticated) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const { messages, ast, diagramType } = await req.json();
 
     if (!ast || !messages || !Array.isArray(messages)) {

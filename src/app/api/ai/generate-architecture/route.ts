@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { GroqProvider } from '@/services/ai/providers/GroqProvider';
+import { checkAuth } from '@/lib/auth-check';
 
 export async function POST(req: Request) {
   try {
+    const isAuthenticated = await checkAuth(req);
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { prompt, complexity, cloudProvider } = await req.json();
 
     if (!prompt) {

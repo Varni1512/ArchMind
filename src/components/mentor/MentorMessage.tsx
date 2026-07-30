@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Bot, User, Edit2, FileText } from 'lucide-react';
 import { ChatMessage } from '@/store/useMentorStore';
@@ -69,7 +70,7 @@ export function MentorMessage({ message, onEdit }: MentorMessageProps) {
             {message.attachments.map((att, i) => (
               <div key={i} className="flex items-center gap-2 bg-surface border border-primary/20 rounded-lg p-2 max-w-[200px]">
                 {att.type === 'image' ? (
-                  <img src={att.url} alt={att.fileName} className="w-10 h-10 object-cover rounded" />
+                  <Image src={att.url} alt={att.fileName} width={40} height={40} className="w-10 h-10 object-cover rounded" unoptimized />
                 ) : (
                   <div className="flex flex-col items-center justify-center w-10 h-10 bg-primary/5 rounded">
                     <span className="font-bold text-primary mb-1 text-[10px]">PDF</span>

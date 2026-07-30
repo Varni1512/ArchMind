@@ -124,7 +124,6 @@ export function useAIEvaluation(excalidrawAPI: any, diagramType: string, questio
 
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          console.log('Evaluation aborted by user.');
           return;
         }
 

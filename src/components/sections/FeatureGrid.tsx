@@ -43,7 +43,7 @@ export function FeatureGrid() {
           <Reveal delay={0.6} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
             <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Terminal size={18} strokeWidth={2.5} /></div>
             <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold">+ Boilerplate Code Gen</h4>
-            <p className="text-[14px] opacity-72">Don't just draw it, build it. Convert your visual LLDs directly into working boilerplate code for your next project.</p>
+            <p className="text-[14px] opacity-72">Don&apos;t just draw it, build it. Convert your visual LLDs directly into working boilerplate code for your next project.</p>
           </Reveal>
         </div>
       </div>
