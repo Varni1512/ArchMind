@@ -10,12 +10,12 @@ export class GroqProvider implements AIProvider {
     this.model = "llama-3.3-70b-versatile";
   }
 
-  async evaluateDesign(ast: any, diagramType: string): Promise<AIEvaluationResponse> {
+  async evaluateDesign(ast: any, diagramType: string, customSystemPrompt?: string): Promise<AIEvaluationResponse> {
     if (!this.apiKey) {
       throw new Error("Groq API key is missing. Please set NEXT_PUBLIC_GROQ_API_KEY.");
     }
 
-    const systemPrompt = getLLDReviewPrompt(diagramType);
+    const systemPrompt = customSystemPrompt || getLLDReviewPrompt(diagramType);
     
     // We specify a highly detailed base JSON schema, Groq will try to conform to it.
     // Llama 3.3 supports JSON mode by adding response_format: { type: "json_object" }
@@ -27,7 +27,7 @@ export class GroqProvider implements AIProvider {
       },
       {
         role: "user",
-        content: `Evaluate the following UML AST:\n\n${JSON.stringify(ast, null, 2)}\n\nReturn the evaluation in the requested JSON format.`
+        content: `Evaluate the following AST:\n\n${JSON.stringify(ast, null, 2)}\n\nReturn the evaluation in the requested JSON format.`
       }
     ];
 
@@ -67,13 +67,13 @@ export class GroqProvider implements AIProvider {
       throw error;
     }
   }
-  async chatWithDesign(messages: any[], ast: any, diagramType: string): Promise<string> {
+  
+  async chatWithDesign(messages: any[], ast: any, diagramType: string, customSystemPrompt?: string): Promise<string> {
     if (!this.apiKey) {
       throw new Error("Groq API key is missing. Please set NEXT_PUBLIC_GROQ_API_KEY.");
     }
 
-    const { getLLDChatPrompt } = await import('../prompts/LLDChatPrompt');
-    const systemPrompt = getLLDChatPrompt(diagramType);
+    const systemPrompt = customSystemPrompt || (await import('../prompts/LLDChatPrompt')).getLLDChatPrompt(diagramType);
 
     // Prepare the payload: system prompt + hidden AST context + user conversation
     const payloadMessages = [
