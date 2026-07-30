@@ -12,7 +12,11 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "ArchMind — AI System Design Copilot",
+  metadataBase: new URL('https://archmind.codewithvarni.app'),
+  title: {
+    default: "ArchMind — AI System Design Copilot",
+    template: "%s | ArchMind",
+  },
   description: "Your AI-powered copilot for generating, analyzing, and reviewing high-level and low-level system architectures in seconds.",
   keywords: ["System Design", "AI Architecture", "HLD", "LLD", "Software Architecture", "UML Generator", "System Design Interview"],
   openGraph: {
