@@ -80,6 +80,44 @@ export interface AIEvaluationResponse {
   };
 }
 
+export interface AIGeneratedArchitectureNode {
+  id: string;
+  type: 'client' | 'load_balancer' | 'api_gateway' | 'service' | 'database' | 'cache' | 'queue' | 'storage' | 'external' | 'other';
+  label: string;
+  description: string;
+  technologies?: string[];
+}
+
+export interface AIGeneratedArchitectureEdge {
+  source: string;
+  target: string;
+  label: string;
+  description?: string;
+}
+
+export interface AIGeneratedArchitecture {
+  nodes: AIGeneratedArchitectureNode[];
+  edges: AIGeneratedArchitectureEdge[];
+  explanation: {
+    overview: string;
+    functionalRequirements: string[];
+    nonFunctionalRequirements: string[];
+    assumptions: string[];
+    components: { name: string; description: string; technology: string }[];
+    requestFlow: string[];
+    databaseStrategy: string;
+    cacheStrategy: string;
+    queueStrategy?: string;
+    storageStrategy?: string;
+    security: string[];
+    scalability: string;
+    faultTolerance: string;
+    tradeOffs: string[];
+    bottlenecks: string[];
+    futureImprovements: string[];
+  };
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -89,4 +127,6 @@ export interface AIProvider {
   evaluateDesign(ast: any, diagramType: string): Promise<AIEvaluationResponse>;
   chatWithDesign(messages: ChatMessage[], ast: any, diagramType: string): Promise<string>;
   generateResponse(messages: ChatMessage[], model?: string, temperature?: number): Promise<string>;
+  generateArchitecture?(prompt: string, complexity?: string, cloudProvider?: string): Promise<AIGeneratedArchitecture>;
 }
+

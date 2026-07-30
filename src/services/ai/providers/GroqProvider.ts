@@ -1,6 +1,6 @@
-import { AIProvider, AIEvaluationResponse, ChatMessage } from '../types';
+import { AIProvider, AIEvaluationResponse, ChatMessage, AIGeneratedArchitecture } from '../types';
 import { getLLDReviewPrompt } from '../prompts/LLDReviewPrompt';
-
+import { getAIGenerationPrompt } from '../prompts/AIGenerationPrompt';
 export class GroqProvider implements AIProvider {
   private apiKey: string;
   private model: string;
@@ -143,6 +143,65 @@ export class GroqProvider implements AIProvider {
       return data.choices[0].message.content;
     } catch (error: any) {
       console.error("Error in GroqProvider generateResponse:", error);
+      throw error;
+    }
+  }
+
+  async generateArchitecture(
+    prompt: string,
+    complexity?: string,
+    cloudProvider?: string
+  ): Promise<AIGeneratedArchitecture> {
+    if (!this.apiKey) {
+      throw new Error("Groq API key is missing. Please set NEXT_PUBLIC_GROQ_API_KEY.");
+    }
+
+    const systemPrompt = getAIGenerationPrompt(complexity, cloudProvider);
+    
+    const messages = [
+      {
+        role: "system",
+        content: systemPrompt
+      },
+      {
+        role: "user",
+        content: `Generate an architecture for the following prompt:\n\n${prompt}`
+      }
+    ];
+
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages,
+          response_format: { type: "json_object" },
+          temperature: 0.3, 
+        })
+      });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        console.error("Groq API Error:", errBody);
+        throw new Error(`Groq API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+      
+      try {
+        const parsed = JSON.parse(content);
+        return parsed as AIGeneratedArchitecture;
+      } catch (parseError) {
+        console.error("Failed to parse Groq output as JSON:", content);
+        throw new Error("Failed to parse AI response. The model did not return valid JSON.");
+      }
+    } catch (error: any) {
+      console.error("Error in GroqProvider generateArchitecture:", error);
       throw error;
     }
   }

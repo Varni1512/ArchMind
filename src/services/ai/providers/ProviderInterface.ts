@@ -15,4 +15,9 @@ export interface AIProvider {
    * Stream a chat response back. Needs to return a readable stream (e.g. from Vercel AI SDK or fetch)
    */
   streamChat(messages: any[], model: string, temperature?: number): Promise<ReadableStream>;
+
+  /**
+   * Generate an architecture from a natural language prompt
+   */
+  generateArchitecture?(prompt: string, complexity?: string, cloudProvider?: string): Promise<any>;
 }

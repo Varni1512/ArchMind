@@ -6,13 +6,6 @@ interface Props {
   onAPI?: (api: any) => void;
 }
 
-const UI_OPTIONS = {
-  canvasActions: {
-    loadScene: false,
-    export: { saveFileToDisk: true },
-    toggleTheme: true,
-  }
-};
 
 export default function ArchMindCanvas({ onAPI }: Props) {
   /**
@@ -33,15 +26,15 @@ export default function ArchMindCanvas({ onAPI }: Props) {
 
   return (
     <Excalidraw 
+      key="archmind-canvas-force-reset"
       theme="light"
       name="ArchMind Canvas"
-      excalidrawAPI={onAPI}
       initialData={{ appState: { viewBackgroundColor: "#fffce8" } }}
-      // UIOptions allows us to aggressively hide their default floating panels
-      UIOptions={UI_OPTIONS}
+      excalidrawAPI={onAPI}
     >
       {/* Custom Main Menu Configuration */}
       <MainMenu>
+        <MainMenu.DefaultItems.SaveToActiveFile />
         <MainMenu.DefaultItems.Export />
         <MainMenu.DefaultItems.SaveAsImage />
         <MainMenu.DefaultItems.ClearCanvas />

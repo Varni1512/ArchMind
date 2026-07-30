@@ -37,7 +37,7 @@ export function FeatureGrid() {
           </Reveal>
           <Reveal delay={0.5} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">
             <div className="w-[42px] h-[42px] rounded-[11px] bg-accent text-primary flex items-center justify-center mb-[18px]"><Sparkles size={18} strokeWidth={2.5} /></div>
-            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold flex items-center gap-2">5. AI Design Generator <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-wider">Coming Soon</span></h4>
+            <h4 className="text-[16.5px] font-heading text-primary tracking-[-0.02em] leading-[1.1] mb-2 font-bold flex items-center gap-2">5. AI Design Generator</h4>
             <p className="text-[14px] opacity-72">Describe a system in plain English and watch ArchMind construct the complete HLD and LLD diagrams instantly.</p>
           </Reveal>
           <Reveal delay={0.6} className="bg-surface border border-primary/10 rounded-[14px] py-[28px] px-[24px] transition-all duration-250 ease-out hover:-translate-y-[5px] hover:shadow-soft hover:border-primary/20">

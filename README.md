@@ -31,7 +31,7 @@ Your personal Principal Engineer, living in the sidebar.
 - **Granular Evaluation**: Receive strict grading on Scalability, Reliability, Security, and Data Management.
 - **History Snapshots**: Automatically saves the state of your canvas alongside your chat history for easy resume.
 
-### 5. ⚡ AI Design Generator *(Coming Soon)*
+### 5. ⚡ AI Design Generator
 Describe a system in plain English, and watch ArchMind construct the complete HLD and LLD diagrams right before your eyes. 
 
 ---
