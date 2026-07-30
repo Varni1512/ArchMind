@@ -116,8 +116,8 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
           }
         }
 
-        import('@excalidraw/excalidraw').then(({ convertToExcalidrawElements }) => {
-          const validElements = convertToExcalidrawElements(allElements);
+        import('@excalidraw/excalidraw').then(({ restoreElements }) => {
+          const validElements = restoreElements(allElements, null);
           if (allFiles.length > 0) {
             excalidrawAPI.addFiles(allFiles);
           }

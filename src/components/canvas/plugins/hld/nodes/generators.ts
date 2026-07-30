@@ -106,7 +106,7 @@ export async function generateHLDNode(x: number, y: number, tool: ToolDefinition
   const elements = [];
   let file = null;
   
-  const customData = { type: 'node', id: tool.id, label: tool.label };
+  const customData = { type: 'node', id: tool.id, label: tool.label, size: 'small' };
   const category = getCategoryByTool(tool.id);
   const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS['External'];
 

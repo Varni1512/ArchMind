@@ -8,6 +8,8 @@ import { HLDToolbarPlugin } from './toolbar/HLDToolbarPlugin';
 import { TopDiagramSwitcher } from './panels/TopDiagramSwitcher';
 import { QuestionStartModal } from './panels/QuestionStartModal';
 import { HLDWorkspaceProvider, useHLDWorkspace } from './context/HLDWorkspaceContext';
+import { CostEstimatorWidget } from './components/CostEstimatorWidget';
+import { NodePropertiesMenu } from './components/NodePropertiesMenu';
 import { Sparkles, X, BookOpen } from 'lucide-react';
 
 function WorkspaceContent() {
@@ -37,10 +39,14 @@ function WorkspaceContent() {
     if (loadedHistory && excalidrawAPI) {
       if (loadedHistory.elements && Array.isArray(loadedHistory.elements) && loadedHistory.elements.length > 0) {
         // Add a small delay to ensure Excalidraw's internal state is fully mounted before updating
-        setTimeout(() => {
+        setTimeout(async () => {
           try {
-            excalidrawAPI.updateScene({ elements: loadedHistory.elements });
-            excalidrawAPI.scrollToContent(loadedHistory.elements, { fitToContent: true });
+            const excalidrawUtils = await import('@excalidraw/excalidraw');
+            // Using restoreElements fixes the "Fractional indices invariant has been compromised" error
+            // by properly recalculating z-index ordering for the loaded elements.
+            const validElements = excalidrawUtils.restoreElements(loadedHistory.elements, null);
+            excalidrawAPI.updateScene({ elements: validElements });
+            excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
           } catch (e) {
             console.error("Error updating excalidraw scene:", e);
           }
@@ -98,6 +104,9 @@ function WorkspaceContent() {
             <Sparkles size={20} />
           </button>
         )}
+
+        <NodePropertiesMenu excalidrawAPI={excalidrawAPI} />
+        <CostEstimatorWidget excalidrawAPI={excalidrawAPI} />
       </div>
 
       {/* Right Panel (Slide in/out) */}

@@ -10,6 +10,7 @@ export interface HLDNode {
   y: number;
   width: number;
   height: number;
+  size?: 'small' | 'medium' | 'large';
 }
 
 export interface HLDEdge {
@@ -57,6 +58,7 @@ export class HLDASTEngine {
               y: minY,
               width: maxX - minX,
               height: maxY - minY,
+              size: dataElement.customData.size || 'small',
             });
           }
         }

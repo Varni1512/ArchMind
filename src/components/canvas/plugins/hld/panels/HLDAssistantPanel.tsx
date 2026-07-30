@@ -2,8 +2,12 @@ import React, { useRef, useEffect, useState } from 'react';
 import { ShieldAlert, Layers, Zap, Loader2, AlertCircle, X, MessageSquare, Send, User, Bot, Trash2, Save, Check, History } from 'lucide-react';
 import { useHLDAIEvaluation } from '../hooks/useHLDAIEvaluation';
 import { useHLDChat } from '../hooks/useHLDChat';
+import { useHLDTerraform } from '../hooks/useHLDTerraform';
 import { useHLDWorkspace } from '../context/HLDWorkspaceContext';
 import { HLDSavedHistoryPanel } from './HLDSavedHistoryPanel';
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Terminal } from 'lucide-react';
 
 interface Props {
   excalidrawAPI?: any;
@@ -30,6 +34,9 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
 
   // Chat Hook
   const { messages, input, setInput, isChatLoading, chatError, sendMessage, clearChat } = useHLDChat(excalidrawAPI, diagramType, currentQuestion?.id);
+
+  // Terraform Hook
+  const { isGenerating: isGeneratingTerraform, terraformCode, error: terraformError, generateTerraform } = useHLDTerraform(excalidrawAPI);
 
   // Focus management for accessibility
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -171,6 +178,15 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
               </button>
             )}
             <button
+              onClick={generateTerraform}
+              disabled={isGeneratingTerraform || loading || !excalidrawAPI}
+              title="Generate Terraform (IaC)"
+              className="bg-zinc-800 hover:bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+            >
+              {isGeneratingTerraform ? <Loader2 size={16} className="animate-spin" /> : <Terminal size={16} />}
+              <span className="hidden sm:inline">Terraform</span>
+            </button>
+            <button
               onClick={evaluateDesign}
               disabled={loading || !excalidrawAPI}
               aria-label={loading ? (retryCount > 0 ? "Retrying evaluation" : "Evaluating design") : "Evaluate Design"}
@@ -199,10 +215,16 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
                 <p>{error}</p>
               </div>
             )}
+            {terraformError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm flex gap-2" role="alert">
+                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                <p>{terraformError}</p>
+              </div>
+            )}
 
-            {!evaluation && !loading && !error && (
+            {!evaluation && !terraformCode && !loading && !isGeneratingTerraform && !error && !terraformError && (
               <div className="text-center text-primary/50 text-sm mt-10">
-                Click "Evaluate Design" to get AI feedback on your architecture.
+                Click "Evaluate Design" or "Terraform" to get AI feedback on your architecture.
               </div>
             )}
 
@@ -210,6 +232,33 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
               <div className="flex flex-col items-center justify-center text-primary/50 text-sm mt-10 space-y-3">
                 <Loader2 size={32} className="animate-spin text-purple-500" />
                 <p>{retryCount > 0 ? `Connection failed. Retrying... (Attempt ${retryCount}/2)` : 'Analyzing architecture structure...'}</p>
+              </div>
+            )}
+
+            {terraformCode && !isGeneratingTerraform && (
+              <div className="space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm text-primary-ink flex items-center gap-2">
+                    <Terminal size={16} className="text-zinc-700" />
+                    Terraform (main.tf)
+                  </h3>
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(terraformCode)}
+                    className="text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-2 py-1 rounded"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <div className="rounded-xl overflow-hidden shadow-sm text-left text-sm max-h-[400px] overflow-y-auto custom-scrollbar">
+                  <SyntaxHighlighter
+                    style={vscDarkPlus as any}
+                    language="hcl"
+                    PreTag="div"
+                    className="!m-0 !bg-[#1E1E1E]"
+                  >
+                    {terraformCode}
+                  </SyntaxHighlighter>
+                </div>
               </div>
             )}
 

@@ -57,7 +57,7 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
             
             if (newElements.length > 0) {
               const excalidrawUtils = await import('@excalidraw/excalidraw');
-              const validElements = excalidrawUtils.convertToExcalidrawElements(newElements);
+              const validElements = excalidrawUtils.restoreElements(newElements, null);
               
               if (file) {
                 excalidrawAPI.addFiles([file]);
