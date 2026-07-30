@@ -74,7 +74,11 @@ export const DIAGRAM_TOOLS_MAP: Record<DiagramType, { nodes: ToolDefinition[], e
     ],
     edges: [
       { id: 'Connection', label: 'Connection', type: 'edge' },
-      { id: 'AsyncConnection', label: 'Async Connection', type: 'edge' }
+      { id: 'AsyncConnection', label: 'Async Connection', type: 'edge' },
+      { id: 'HTTPConnection', label: 'HTTP / REST', type: 'edge' },
+      { id: 'gRPCConnection', label: 'gRPC', type: 'edge' },
+      { id: 'WebSocketConnection', label: 'WebSocket', type: 'edge' },
+      { id: 'TCPConnection', label: 'TCP / UDP', type: 'edge' }
     ]
   },
   'Microservices': {

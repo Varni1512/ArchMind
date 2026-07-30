@@ -116,6 +116,30 @@ export function useHLDAIEvaluation(excalidrawAPI: any, diagramType: string, ques
         const evalData = result.data as AIEvaluationResponse;
         setEvaluation(evalData);
         
+        // Highlight bottlenecks if any are returned
+        if (evalData.bottleneckNodeIds && evalData.bottleneckNodeIds.length > 0) {
+          const updatedElements = elements.map((el: any) => {
+            if (el.groupIds && el.groupIds.length > 0) {
+              const topLevelGroupId = el.groupIds[el.groupIds.length - 1];
+              if (evalData.bottleneckNodeIds?.includes(topLevelGroupId)) {
+                // Update styling for the main box container
+                if (el.type === 'rectangle') {
+                  return {
+                    ...el,
+                    strokeColor: '#ef4444', // Red
+                    strokeWidth: 3,
+                    backgroundColor: '#fee2e2', // Light red fill
+                    version: el.version + 1
+                  };
+                }
+              }
+            }
+            return el;
+          });
+          
+          excalidrawAPI.updateScene({ elements: updatedElements });
+        }
+        
         // Success
         setLoading(false);
         setRetryCount(0);

@@ -88,10 +88,22 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
       
       switch (toolId) {
         case 'Connection':
-          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "arrow" };
+          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "arrow", currentItemStrokeColor: "#1e1e1e" };
           break;
         case 'AsyncConnection':
-          updateState = { ...updateState, currentItemStrokeStyle: "dashed", currentItemEndArrowhead: "triangle" };
+          updateState = { ...updateState, currentItemStrokeStyle: "dashed", currentItemEndArrowhead: "triangle", currentItemStrokeColor: "#1e1e1e" };
+          break;
+        case 'HTTPConnection':
+          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "arrow", currentItemStrokeColor: "#3b82f6" };
+          break;
+        case 'gRPCConnection':
+          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "arrow", currentItemStrokeColor: "#10b981" };
+          break;
+        case 'WebSocketConnection':
+          updateState = { ...updateState, currentItemStrokeStyle: "dashed", currentItemEndArrowhead: "arrow", currentItemStrokeColor: "#8b5cf6" };
+          break;
+        case 'TCPConnection':
+          updateState = { ...updateState, currentItemStrokeStyle: "solid", currentItemEndArrowhead: "triangle", currentItemStrokeColor: "#f59e0b" };
           break;
       }
       excalidrawAPI.updateScene({ appState: updateState });
@@ -171,6 +183,10 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
       
       case 'Connection': return <MoveRight size={16} />;
       case 'AsyncConnection': return <ArrowRight size={16} />;
+      case 'HTTPConnection': return <MoveRight size={16} className="text-blue-500" />;
+      case 'gRPCConnection': return <MoveRight size={16} className="text-green-500" />;
+      case 'WebSocketConnection': return <ArrowRight size={16} className="text-purple-500" />;
+      case 'TCPConnection': return <MoveRight size={16} className="text-orange-500" />;
       default: return <Box size={16} />;
     }
   };
@@ -297,7 +313,7 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
                   onMouseLeave={handleMouseLeave}
                 >
                   <button 
-                    className={`px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 cursor-pointer text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                    className={`px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 cursor-pointer text-sm font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
                       isActive || (openCategory === category.id && !searchQuery)
                         ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-100" 
                         : "text-gray-600 border border-transparent hover:bg-white hover:shadow-md hover:text-gray-900 hover:-translate-y-0.5"
@@ -344,7 +360,7 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
         
         {/* Edges */}
         {tools.edges.length > 0 && (
-          <div className="flex items-center gap-1 pl-1">
+          <div className="grid grid-cols-3 gap-1 pl-1">
             {tools.edges.map(tool => (
               <ToolbarButton 
                 key={tool.id} 

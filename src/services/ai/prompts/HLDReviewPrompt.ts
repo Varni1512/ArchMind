@@ -45,6 +45,7 @@ You MUST return ONLY a valid JSON object matching exactly this schema:
     "mediumPriority": ["string"],
     "lowPriority": ["string"]
   },
+  "bottleneckNodeIds": ["string"], // Extract the node IDs of any Single Points of Failure (SPOF) or severe bottlenecks here.
   "missingElements": ["string"] // optional
 }
 

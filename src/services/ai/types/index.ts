@@ -26,6 +26,7 @@ export interface AIEvaluationResponse {
   strengths: string[];
   issues: AIEvaluationIssue[];
   missingElements?: string[]; // Optional for some diagrams
+  bottleneckNodeIds?: string[]; // SPOF or severe bottlenecks
   
   // Specific to Class/Object diagrams
   solidReview?: {
