@@ -3,7 +3,7 @@ import { Reveal } from "../ui/Reveal";
 
 export function LowLevelDesign() {
   return (
-    <section id="design">
+    <section id="design" className="scroll-mt-28">
       <div className="w-full max-w-7xl mx-auto px-8">
         <div className="my-[40px] grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <Reveal>

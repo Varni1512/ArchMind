@@ -112,7 +112,7 @@ export function Modules() {
   };
 
   return (
-    <section id="learn" className="py-[60px]">
+    <section id="learn" className="scroll-mt-28 py-[60px]">
       <div className="w-full max-w-7xl mx-auto px-8">
         <Reveal className="max-w-[640px] mb-[64px]">
           <span className="inline-flex items-center gap-2 font-code text-[12.5px] font-medium tracking-[0.08em] uppercase text-primary bg-accent px-[14px] py-[7px] pl-[10px] rounded-full mb-[18px]">

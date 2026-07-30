@@ -4,7 +4,7 @@ import { AnimatedNumber } from "../ui/AnimatedNumber";
 
 export function MockInterviews() {
   return (
-    <section id="interview" className="py-[60px]">
+    <section id="interview" className="scroll-mt-28 py-[60px]">
       <div className="w-full max-w-7xl mx-auto px-8">
         <div className="max-w-[640px] mb-[64px] mx-auto text-center">
           <Reveal delay={0.1}>

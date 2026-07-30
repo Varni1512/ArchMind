@@ -21,7 +21,7 @@ function AnimatedNumber({ value }: { value: number }) {
 
 export function ReviewDeepDive() {
   return (
-    <section id="practice" className="py-[60px] bg-primary-ink/5">
+    <section id="practice" className="scroll-mt-28 py-[60px] bg-primary-ink/5">
       <div className="w-full max-w-7xl mx-auto px-8">
         <div className="max-w-[640px] mb-[64px] mx-auto text-center">
           <Reveal delay={0.1}>
