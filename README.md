@@ -23,6 +23,8 @@ An object-oriented design environment built for UML.
 A premium cloud architecture workspace.
 - **50+ Industry-Standard Components**: Kafka, Kubernetes, Load Balancers, Redis, API Gateways, and more.
 - **Smart Protocol Edges**: Visually map gRPC, WebSockets, and HTTP connections.
+- **Dynamic Cloud Pricing Engine**: Interactive capacity sizing (Small, Medium, Large) for components with real-time monthly cost estimation directly on the canvas.
+- **Infrastructure-as-Code (Terraform) Export**: Click a button to securely parse your visual architecture and generate deployable `main.tf` code using Llama-3.
 - **Visual Profiler**: Programmatically detects bottlenecks and paints Single Points of Failure (SPOFs) in red directly on your canvas!
 
 ### 4. 🤖 AI Design Mentor
