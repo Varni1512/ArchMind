@@ -1,8 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Caveat } from 'next/font/google';
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Analytics } from "@vercel/analytics/react";
+import NextAuthProvider from "@/components/providers/NextAuthProvider";
+import { VisitorTracker } from "@/components/analytics/VisitorTracker";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
+import { JsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
 const caveat = Caveat({
@@ -11,24 +15,85 @@ const caveat = Caveat({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  themeColor: '#354259',
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://archmind.codewithvarni.app'),
   title: {
-    default: "ArchMind — AI System Design Copilot",
+    default: "ArchMind — AI System Design Copilot | HLD & LLD Practice",
     template: "%s | ArchMind",
   },
-  description: "Your AI-powered copilot for generating, analyzing, and reviewing high-level and low-level system architectures in seconds.",
-  keywords: ["System Design", "AI Architecture", "HLD", "LLD", "Software Architecture", "UML Generator", "System Design Interview"],
+  description: "ArchMind by Varnikumar Patel is the ultimate AI copilot for High-Level Design (HLD) practice, Low-Level Design (LLD) practice, machine coding, and software architecture interviews. Generate, review, and simulate scalable system architectures in seconds.",
+  keywords: [
+    "archmind",
+    "archmind system design",
+    "lld practice",
+    "hld practice",
+    "system design practice",
+    "system design practitioner",
+    "high level design practice",
+    "low level design practice",
+    "system design interview prep",
+    "system design copilot",
+    "software architecture practice",
+    "ai architecture generator",
+    "uml class diagram generator",
+    "machine coding round",
+    "mock system design interview",
+    "varnikumar patel",
+    "varni patel",
+  ],
+  authors: [
+    { name: "Varnikumar Patel", url: "https://www.linkedin.com/in/varnikumarpatel" },
+    { name: "ArchMind", url: "https://archmind.codewithvarni.app" }
+  ],
+  creator: "Varnikumar Patel",
+  publisher: "ArchMind",
+  alternates: {
+    canonical: "https://archmind.codewithvarni.app",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: '/favicon/favicon.ico', sizes: 'any' },
+      { url: '/favicon/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+    ],
+    shortcut: '/favicon/favicon.ico',
+    apple: [
+      { url: '/favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/favicon/site.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ArchMind',
+  },
   openGraph: {
-    title: "ArchMind — AI System Design Copilot",
-    description: "Generate, analyze, and review system architectures with AI.",
+    title: "ArchMind — AI System Design Copilot | HLD & LLD Practice",
+    description: "Master System Design with ArchMind. Practice HLD, LLD, UML diagrams, traffic simulations, and mock interviews with AI. Built by Varnikumar Patel.",
     url: "https://archmind.codewithvarni.app",
     siteName: "ArchMind",
     images: [
       {
-        url: "/logo.svg",
-        width: 1200,
-        height: 630,
+        url: "/favicon/web-app-manifest-512x512.png",
+        width: 512,
+        height: 512,
         alt: "ArchMind Logo",
       },
     ],
@@ -37,17 +102,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ArchMind — AI System Design Copilot",
-    description: "Generate, analyze, and review system architectures with AI.",
-    images: ["/logo.svg"],
+    title: "ArchMind — AI System Design Copilot | HLD & LLD Practice",
+    description: "Master System Design with ArchMind. Practice HLD, LLD, and mock interviews with AI. Built by Varnikumar Patel.",
+    images: ["/favicon/web-app-manifest-512x512.png"],
+    creator: "@varnikumarpatel",
   },
 };
 
-import NextAuthProvider from "@/components/providers/NextAuthProvider";
-
-import { VisitorTracker } from "@/components/analytics/VisitorTracker";
-
-// ... existing imports ...
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -55,10 +116,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        <link rel="manifest" href="/favicon/site.webmanifest" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="ArchMind" />
+        <meta name="apple-mobile-web-app-title" content="ArchMind" />
+        <meta name="author" content="Varnikumar Patel" />
+        <JsonLd />
+      </head>
       <body className={`${caveat.variable}`}>
         <NextAuthProvider>
           <AuthProvider>
             <VisitorTracker />
+            <PwaRegister />
             {children}
             <AuthModal />
           </AuthProvider>

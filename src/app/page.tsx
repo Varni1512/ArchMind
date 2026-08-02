@@ -7,6 +7,7 @@ import { ReviewDeepDive } from "@/components/sections/ReviewDeepDive";
 import { LowLevelDesign } from "@/components/sections/LowLevelDesign";
 import { MockInterviews } from "@/components/sections/MockInterviews";
 import { FeatureGrid } from "@/components/sections/FeatureGrid";
+import { FAQSection } from "@/components/sections/FAQSection";
 import { CallToAction } from "@/components/sections/CallToAction";
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
         <LowLevelDesign />
         <MockInterviews />
         <FeatureGrid />
+        <FAQSection />
         <CallToAction />
       </main>
       <Footer />
