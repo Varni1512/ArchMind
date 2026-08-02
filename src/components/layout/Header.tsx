@@ -42,8 +42,25 @@ export function Header() {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
-                    className="absolute right-0 mt-2 w-32 bg-surface rounded-xl shadow-lg border border-primary/10 py-1 overflow-hidden"
+                    className="absolute right-0 mt-2 w-44 bg-surface rounded-xl shadow-lift border border-primary/10 py-1.5 overflow-hidden z-50"
                   >
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2 text-[13.5px] font-medium text-primary hover:bg-primary/5 transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    {user.role === 'admin' && (
+                      <Link
+                        href="/dashboard/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-[13.5px] font-semibold text-accent-deep hover:bg-accent/20 transition-colors"
+                      >
+                        Admin Control ⚡
+                      </Link>
+                    )}
+                    <div className="h-px bg-primary/10 my-1" />
                     <button
                       onClick={() => {
                         setDropdownOpen(false);

@@ -6,7 +6,8 @@ import User from '@/models/User';
 export async function GET(req: Request) {
   try {
     const token = req.headers.get('cookie')
-      ?.split('; ')
+      ?.split(';')
+      ?.map((c) => c.trim())
       ?.find((c) => c.startsWith('token='))
       ?.split('=')[1];
 
@@ -30,7 +31,16 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json(
-      { user: { id: user._id, name: user.name, email: user.email } },
+      { 
+        user: { 
+          id: user._id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role || 'user',
+          customLimits: user.customLimits,
+          aiUsage: user.aiUsage
+        } 
+      },
       { status: 200 }
     );
   } catch (error: any) {

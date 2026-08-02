@@ -1,24 +1,18 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/db';
 import { MentorChat } from '@/models/MentorChat';
+import { getAuthUser } from '@/lib/auth-check';
 
 // GET all chats for the logged in user
 export async function GET(req: Request) {
   try {
-    const token = req.headers.get('cookie')
-      ?.split('; ')
-      ?.find((c) => c.startsWith('token='))
-      ?.split('=')[1];
-
-    if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+    const authUser = await getAuthUser(req);
+    if (!authUser) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
 
     await dbConnect();
     
     // Sort by updated at descending
-    const chats = await MentorChat.find({ user: decoded.id }).sort({ updatedAt: -1 }).lean();
+    const chats = await MentorChat.find({ user: authUser.id }).sort({ updatedAt: -1 }).lean();
 
     // Map _id and cleanup
     const formattedChats = chats.map((chat: any) => ({
@@ -40,22 +34,16 @@ export async function GET(req: Request) {
 // POST create a new chat
 export async function POST(req: Request) {
   try {
-    const token = req.headers.get('cookie')
-      ?.split('; ')
-      ?.find((c) => c.startsWith('token='))
-      ?.split('=')[1];
+    const authUser = await getAuthUser(req);
+    if (!authUser) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
 
-    if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-    
     const body = await req.json();
 
     await dbConnect();
 
     const newChat = new MentorChat({
       ...body,
-      user: decoded.id
+      user: authUser.id
     });
 
     await newChat.save();

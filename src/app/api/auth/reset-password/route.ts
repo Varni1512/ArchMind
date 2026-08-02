@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       email,
       resetPasswordOtp: otp,
       resetPasswordExpires: { $gt: Date.now() } // Ensure OTP has not expired
-    });
+    }).select('+resetPasswordOtp +resetPasswordExpires');
 
     if (!user) {
       return NextResponse.json(

@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { GroqProvider } from '@/services/ai/providers/GroqProvider';
 import { getHLDChatPrompt } from '@/services/ai/prompts/HLDChatPrompt';
-import { checkAuth } from '@/lib/auth-check';
+import { checkAndIncrementQuota } from '@/lib/quota';
 
 export async function POST(req: Request) {
   try {
-    const isAuthenticated = await checkAuth(req);
-    if (!isAuthenticated) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    const quotaResult = await checkAndIncrementQuota(req, 'hldChat');
+    if (!quotaResult.success) {
+      return NextResponse.json(
+        { message: quotaResult.message || 'Limit exceeded' },
+        { status: quotaResult.status || 403 }
+      );
     }
 
     const { messages, ast, diagramType } = await req.json();
@@ -24,7 +27,15 @@ export async function POST(req: Request) {
     const reply = await aiProvider.chatWithDesign(messages, ast, diagramType || 'System Architecture', systemPrompt);
 
     return NextResponse.json(
-      { message: 'Chat successful', data: reply },
+      { 
+        message: 'Chat successful', 
+        data: reply,
+        quota: {
+          current: quotaResult.current,
+          max: quotaResult.max,
+          remaining: quotaResult.remaining,
+        }
+      },
       { status: 200 }
     );
   } catch (error: any) {

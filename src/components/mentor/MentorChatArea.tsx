@@ -113,10 +113,16 @@ export function MentorChatArea() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch response');
+        updateMessage(targetChatId, assistantMessageId, errorData.error || errorData.message || 'Limit reached or request failed.');
+        setIsStreaming(false);
+        return;
       }
 
-      if (!response.body) throw new Error('No response body from server');
+      if (!response.body) {
+        updateMessage(targetChatId, assistantMessageId, 'No response stream received from server.');
+        setIsStreaming(false);
+        return;
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -134,7 +140,7 @@ export function MentorChatArea() {
       }
 
     } catch (error: any) {
-      console.error('Chat error:', error);
+      if (error?.name === 'AbortError') return;
       updateMessage(targetChatId, assistantMessageId, `[Error: ${error.message || 'Unknown error'}]`);
     } finally {
       setIsStreaming(false);

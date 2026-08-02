@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { GroqProvider } from '@/services/ai/providers/GroqProvider';
-import { checkAuth } from '@/lib/auth-check';
+import { checkAndIncrementQuota } from '@/lib/quota';
 
 export async function POST(req: Request) {
   try {
-    const isAuthenticated = await checkAuth(req);
-    if (!isAuthenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const quotaResult = await checkAndIncrementQuota(req, 'aiGenerator');
+    if (!quotaResult.success) {
+      return NextResponse.json(
+        { error: quotaResult.message || 'Limit exceeded' },
+        { status: quotaResult.status || 403 }
+      );
     }
 
     const { prompt, complexity, cloudProvider } = await req.json();

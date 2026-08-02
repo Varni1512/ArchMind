@@ -45,6 +45,8 @@ export const metadata: Metadata = {
 
 import NextAuthProvider from "@/components/providers/NextAuthProvider";
 
+import { VisitorTracker } from "@/components/analytics/VisitorTracker";
+
 // ... existing imports ...
 export default function RootLayout({
   children,
@@ -56,6 +58,7 @@ export default function RootLayout({
       <body className={`${caveat.variable}`}>
         <NextAuthProvider>
           <AuthProvider>
+            <VisitorTracker />
             {children}
             <AuthModal />
           </AuthProvider>

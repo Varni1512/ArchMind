@@ -101,6 +101,12 @@ export function useAIEvaluation(excalidrawAPI: any, diagramType: string, questio
         const result = await response.json().catch(() => null);
 
         if (!response.ok) {
+          if (response.status === 403) {
+            setError(result?.message || 'Usage limit reached for this feature. Please contact Admin.');
+            setLoading(false);
+            setRetryCount(0);
+            return;
+          }
           const isRetriable = response.status === 429 || response.status >= 500;
           if (isRetriable && attempt < maxRetries) {
             throw new Error(`Retriable Error: ${response.status}`);

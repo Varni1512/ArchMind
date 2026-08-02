@@ -86,16 +86,16 @@ export function useHLDChat(excalidrawAPI: any, diagramType: string, questionId?:
         signal: abortControllerRef.current.signal
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(result.message || 'Chat request failed.');
+        setChatError(result.message || result.error || 'Chat request failed.');
+        return;
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: result.data }]);
     } catch (err: any) {
       if (err.name === 'AbortError') return;
-      console.error(err);
       setChatError(err.message || 'An unexpected error occurred during chat.');
     } finally {
       setIsChatLoading(false);

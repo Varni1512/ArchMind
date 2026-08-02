@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAIGenerator } from '../context/AIGeneratorContext';
-import { Sparkles, Image as ImageIcon, FileText, Settings, History, PanelLeftClose } from 'lucide-react';
+import { Sparkles, Image as ImageIcon, FileText, Settings, History, PanelLeftClose, AlertTriangle, X } from 'lucide-react';
 import { convertJSONToExcalidraw } from '../utils/JSONToExcalidraw';
 
 const EXAMPLES = [
@@ -18,6 +18,7 @@ interface AIControlPanelProps {
 }
 
 export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
     prompt,
     setPrompt,
@@ -34,6 +35,7 @@ export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) 
   const handleGenerate = async () => {
     if (!prompt.trim() || !excalidrawAPI) return;
     
+    setErrorMessage(null);
     setIsGenerating(true);
     setExplanationData(null);
     
@@ -44,9 +46,13 @@ export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) 
         body: JSON.stringify({ prompt, complexity, cloudProvider }),
       });
 
-      if (!res.ok) throw new Error('Failed to generate architecture');
-      
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setErrorMessage(data.error || data.message || 'Generation failed. Please try again.');
+        setIsGenerating(false);
+        return;
+      }
       
       // Convert JSON to Excalidraw Elements
       const elements = convertJSONToExcalidraw(data);
@@ -61,9 +67,8 @@ export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) 
       // Set explanation panel data
       setExplanationData(data.explanation);
       
-    } catch (error) {
-      console.error(error);
-      alert('Generation failed. Please try again.');
+    } catch (err: any) {
+      setErrorMessage('Network connection error. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -96,7 +101,10 @@ export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) 
           <label className="text-sm font-semibold text-primary-ink">System Prompt</label>
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => {
+              setPrompt(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
             placeholder="e.g. Design Instagram, WhatsApp..."
             className="w-full h-32 p-3 bg-transparent border border-primary/20 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
           />
@@ -116,6 +124,24 @@ export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) 
             </>
           )}
         </button>
+
+        {/* In-Panel Limit / Error Alert */}
+        {errorMessage && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-primary-ink flex items-start gap-2.5 shadow-sm">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-amber-900">Feature Limit Notice</p>
+              <p className="mt-0.5 text-primary/80 leading-relaxed">{errorMessage}</p>
+            </div>
+            <button 
+              onClick={() => setErrorMessage(null)}
+              className="text-primary/40 hover:text-primary-ink p-0.5 transition-colors cursor-pointer"
+              title="Dismiss"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {/* Settings */}
         <div className="space-y-3">

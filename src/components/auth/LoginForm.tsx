@@ -35,7 +35,11 @@ export function LoginForm() {
       if (res.ok) {
         setUser(data.user);
         closeAuthModal();
-        router.push('/dashboard');
+        if (data.user?.role === 'admin') {
+          router.push('/dashboard/admin');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         setError(data.message || 'Login failed');
       }

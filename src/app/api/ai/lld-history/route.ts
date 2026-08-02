@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import LLDHistory from '@/models/LLDHistory';
+import { getAuthUser } from '@/lib/auth-check';
 
 export async function POST(req: Request) {
   try {
     await dbConnect();
+
+    const authUser = await getAuthUser(req);
+    const userId = authUser ? authUser.id : 'anonymous';
 
     const { diagramType, ast, elements, previewImage, evaluation, chatHistory } = await req.json();
 
@@ -16,6 +20,7 @@ export async function POST(req: Request) {
     }
 
     const historyRecord = await LLDHistory.create({
+      userId,
       diagramType,
       ast,
       elements,
@@ -37,11 +42,12 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await dbConnect();
-    // Fetch all history records, sorted by newest first
-    const histories = await LLDHistory.find().sort({ createdAt: -1 }).lean();
+    const authUser = await getAuthUser(req);
+    const query = authUser ? { userId: authUser.id } : { userId: 'anonymous' };
+    const histories = await LLDHistory.find(query).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ data: histories }, { status: 200 });
   } catch (error: any) {
     console.error('Fetch LLD History Error:', error);

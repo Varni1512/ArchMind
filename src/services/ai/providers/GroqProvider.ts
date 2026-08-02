@@ -6,13 +6,13 @@ export class GroqProvider implements AIProvider {
   private model: string;
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || "";
+    this.apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY || "";
     this.model = "llama-3.3-70b-versatile";
   }
 
   async evaluateDesign(ast: any, diagramType: string, customSystemPrompt?: string): Promise<AIEvaluationResponse> {
     if (!this.apiKey) {
-      throw new Error("Groq API key is missing. Please set NEXT_PUBLIC_GROQ_API_KEY.");
+      throw new Error("Groq API key is missing. Please set GROQ_API_KEY or NEXT_PUBLIC_GROQ_API_KEY.");
     }
 
     const systemPrompt = customSystemPrompt || getLLDReviewPrompt(diagramType);

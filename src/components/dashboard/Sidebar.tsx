@@ -13,11 +13,12 @@ import {
   LayoutDashboard,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   {
     title: 'Dashboard',
     href: '/dashboard',
@@ -59,7 +60,21 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  const navItems = [
+    ...BASE_NAV_ITEMS,
+    ...(user?.role === 'admin'
+      ? [
+          {
+            title: 'Admin Control',
+            href: '/dashboard/admin',
+            icon: ShieldCheck,
+            exact: false,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <motion.aside 
@@ -81,7 +96,7 @@ export function Sidebar() {
       </button>
 
       <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-2 no-scrollbar">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive = item.exact 
             ? pathname === item.href 
             : pathname.startsWith(item.href);

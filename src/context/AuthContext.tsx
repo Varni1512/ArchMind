@@ -7,6 +7,25 @@ type User = {
   id: string;
   name: string;
   email: string;
+  role?: 'user' | 'admin' | string;
+  customLimits?: {
+    lldReview?: number | null;
+    lldChat?: number | null;
+    hldReview?: number | null;
+    hldChat?: number | null;
+    aiGenerator?: number | null;
+    mentorChat?: number | null;
+  };
+  aiUsage?: {
+    lldReview?: number;
+    lldChat?: number;
+    hldReview?: number;
+    hldChat?: number;
+    aiGenerator?: number;
+    mentorChat?: number;
+    totalCalls?: number;
+    lastUsedAt?: string | null;
+  };
 };
 
 export type AuthModalView = 'login' | 'signup' | 'forgot-password' | 'reset-password';

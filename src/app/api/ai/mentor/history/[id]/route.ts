@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/db';
 import { MentorChat } from '@/models/MentorChat';
+import { getAuthUser } from '@/lib/auth-check';
 
 // PUT update a chat (title, messages, etc)
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const token = req.headers.get('cookie')
-      ?.split('; ')
-      ?.find((c) => c.startsWith('token='))
-      ?.split('=')[1];
+    const authUser = await getAuthUser(req);
+    if (!authUser) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
 
-    if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-    
     const body = await req.json();
     const resolvedParams = await params;
     const { id } = resolvedParams;
@@ -23,7 +17,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     // Make sure we only update if it belongs to the user
     const updatedChat = await MentorChat.findOneAndUpdate(
-      { id, user: decoded.id },
+      { id, user: authUser.id },
       { $set: body },
       { new: true }
     );
@@ -41,21 +35,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 // DELETE a chat
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const token = req.headers.get('cookie')
-      ?.split('; ')
-      ?.find((c) => c.startsWith('token='))
-      ?.split('=')[1];
+    const authUser = await getAuthUser(req);
+    if (!authUser) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
 
-    if (!token) return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-    
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
     await dbConnect();
 
-    const deletedChat = await MentorChat.findOneAndDelete({ id, user: decoded.id });
+    const deletedChat = await MentorChat.findOneAndDelete({ id, user: authUser.id });
 
     if (!deletedChat) {
       return NextResponse.json({ message: 'Chat not found or unauthorized' }, { status: 404 });

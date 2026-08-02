@@ -36,13 +36,13 @@ export async function POST(req: Request) {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name },
+      { id: user._id, email: user.email, name: user.name, role: user.role || 'user' },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '12h' }
     );
 
     const response = NextResponse.json(
-      { message: 'Login successful', user: { id: user._id, name: user.name, email: user.email } },
+      { message: 'Login successful', user: { id: user._id, name: user.name, email: user.email, role: user.role || 'user' } },
       { status: 200 }
     );
 

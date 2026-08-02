@@ -27,9 +27,34 @@ const UserSchema = new mongoose.Schema(
     },
     resetPasswordOtp: {
       type: String,
+      select: false,
     },
     resetPasswordExpires: {
       type: Date,
+      select: false,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    customLimits: {
+      lldReview: { type: Number, default: null },
+      lldChat: { type: Number, default: null },
+      hldReview: { type: Number, default: null },
+      hldChat: { type: Number, default: null },
+      aiGenerator: { type: Number, default: null },
+      mentorChat: { type: Number, default: null },
+    },
+    aiUsage: {
+      lldReview: { type: Number, default: 0 },
+      lldChat: { type: Number, default: 0 },
+      hldReview: { type: Number, default: 0 },
+      hldChat: { type: Number, default: 0 },
+      aiGenerator: { type: Number, default: 0 },
+      mentorChat: { type: Number, default: 0 },
+      totalCalls: { type: Number, default: 0 },
+      lastUsedAt: { type: Date, default: null },
     },
   },
   { timestamps: true }

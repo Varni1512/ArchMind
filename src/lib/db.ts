@@ -19,8 +19,12 @@ if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
+import { initAdminAndSettings } from './init-admin';
+
 async function dbConnect() {
   if (cached.conn) {
+    // Non-blocking background check
+    initAdminAndSettings().catch(() => {});
     return cached.conn;
   }
 
@@ -36,6 +40,7 @@ async function dbConnect() {
   
   try {
     cached.conn = await cached.promise;
+    await initAdminAndSettings();
   } catch (e) {
     cached.promise = null;
     throw e;

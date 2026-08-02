@@ -1,13 +1,16 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
-import { checkAuth } from '@/lib/auth-check';
+import { checkAndIncrementQuota } from '@/lib/quota';
 
 export async function POST(req: Request) {
   try {
-    const isAuthenticated = await checkAuth(req);
-    if (!isAuthenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const quotaResult = await checkAndIncrementQuota(req, 'mentorChat');
+    if (!quotaResult.success) {
+      return NextResponse.json(
+        { error: quotaResult.message || 'Chat limit exceeded' },
+        { status: quotaResult.status || 403 }
+      );
     }
 
     const { messages, hasImages } = await req.json();
