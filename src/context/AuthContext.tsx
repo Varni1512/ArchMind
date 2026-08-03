@@ -54,42 +54,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession();
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUser = async () => {
       try {
-        // First check custom JWT authentication
+        // If NextAuth session is already available
+        if (session && session.user) {
+          if (isMounted) {
+            setUser({
+              id: (session.user as any).id || session.user.email || '',
+              name: session.user.name || 'User',
+              email: session.user.email || '',
+            });
+            setLoading(false);
+          }
+          return;
+        }
+
+        // Check custom JWT authentication
         const res = await fetch('/api/auth/me');
         if (res.ok) {
           const data = await res.json();
-          if (data.user) {
+          if (data.user && isMounted) {
             setUser(data.user);
+            setLoading(false);
             return;
           }
         }
         
-        // If custom JWT auth fails, check NextAuth session
-        if (session && session.user) {
-          setUser({
-            id: (session.user as any).id || session.user.email || '',
-            name: session.user.name || 'User',
-            email: session.user.email || '',
-          });
+        // If NextAuth is still loading, wait for it before marking user as null
+        if (status === 'loading') {
           return;
         }
 
         // Neither auth method succeeded
-        setUser(null);
+        if (isMounted) {
+          setUser(null);
+        }
       } catch (error) {
-        if (!session?.user) {
+        if (!session?.user && isMounted) {
           setUser(null);
         }
       } finally {
-        setLoading(false);
+        if (isMounted && status !== 'loading') {
+          setLoading(false);
+        }
       }
     };
 
-    if (status !== 'loading') {
-      fetchUser();
-    }
+    fetchUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, [session, status]);
 
   const logout = async () => {
