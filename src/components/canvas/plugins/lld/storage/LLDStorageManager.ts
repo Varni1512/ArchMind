@@ -1,8 +1,15 @@
 import { SavedDiagram, DiagramMetadata } from '../types';
+import { 
+  STORAGE_KEYS, 
+  saveCanvasData, 
+  loadCanvasData, 
+  clearCanvasData, 
+  sanitizeAppState 
+} from '@/lib/storage/canvasPersistence';
 
 export class LLDStorageManager {
-  private static DIAGRAMS_KEY = 'archmind_lld_diagrams';
-  private static AUTOSAVE_KEY = 'archmind_lld_autosave';
+  private static DIAGRAMS_KEY = STORAGE_KEYS.LLD_DIAGRAMS;
+  private static AUTOSAVE_KEY = STORAGE_KEYS.LLD_AUTOSAVE;
 
   static saveDiagram(
     id: string,
@@ -27,38 +34,48 @@ export class LLDStorageManager {
       updatedAt: Date.now()
     };
 
-    const saved: SavedDiagram = { id, metadata, elements, appState };
+    const saved: SavedDiagram = { 
+      id, 
+      metadata, 
+      elements, 
+      appState: sanitizeAppState(appState) 
+    };
     diagrams[id] = saved;
     
-    localStorage.setItem(this.DIAGRAMS_KEY, JSON.stringify(diagrams));
+    saveCanvasData(this.DIAGRAMS_KEY, diagrams);
     return saved;
   }
 
   static getAllDiagrams(): Record<string, SavedDiagram> {
-    try {
-      const data = localStorage.getItem(this.DIAGRAMS_KEY);
-      return data ? JSON.parse(data) : {};
-    } catch {
-      return {};
-    }
+    const data = loadCanvasData<Record<string, SavedDiagram>>(this.DIAGRAMS_KEY);
+    return data || {};
   }
 
   static deleteDiagram(id: string) {
     const diagrams = this.getAllDiagrams();
     delete diagrams[id];
-    localStorage.setItem(this.DIAGRAMS_KEY, JSON.stringify(diagrams));
+    saveCanvasData(this.DIAGRAMS_KEY, diagrams);
   }
 
   static autoSave(elements: any[], appState: any, metadata: Partial<DiagramMetadata> = {}) {
-    localStorage.setItem(this.AUTOSAVE_KEY, JSON.stringify({ elements, appState, metadata, timestamp: Date.now() }));
+    saveCanvasData(this.AUTOSAVE_KEY, { 
+      elements, 
+      appState: sanitizeAppState(appState), 
+      metadata, 
+      timestamp: Date.now() 
+    });
   }
 
   static loadAutoSave() {
-    try {
-      const data = localStorage.getItem(this.AUTOSAVE_KEY);
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
-    }
+    return loadCanvasData<{
+      elements: any[];
+      appState: any;
+      metadata: Partial<DiagramMetadata>;
+      timestamp: number;
+    }>(this.AUTOSAVE_KEY);
+  }
+
+  static clearAutoSave() {
+    clearCanvasData(this.AUTOSAVE_KEY);
   }
 }

@@ -4,6 +4,15 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import '@excalidraw/excalidraw/index.css';
 
+interface ExcalidrawWrapperProps {
+  onAPI?: (api: any) => void;
+  onChange?: (elements: readonly any[], appState: any, files: any) => void;
+  initialData?: any;
+  storageKey?: string;
+  autoSave?: boolean;
+  showSaveIndicator?: boolean;
+}
+
 const ArchMindCanvas = dynamic(
   () => import('./ArchMindCanvas'),
   {
@@ -16,10 +25,24 @@ const ArchMindCanvas = dynamic(
   }
 );
 
-export default function ExcalidrawWrapper({ onAPI }: { onAPI?: (api: any) => void }) {
+export default function ExcalidrawWrapper({ 
+  onAPI, 
+  onChange, 
+  initialData, 
+  storageKey, 
+  autoSave = false, 
+  showSaveIndicator = false 
+}: ExcalidrawWrapperProps) {
   return (
     <div className="w-full h-full excalidraw-archmind-theme">
-      <ArchMindCanvas onAPI={onAPI} />
+      <ArchMindCanvas 
+        onAPI={onAPI} 
+        onChange={onChange}
+        initialData={initialData}
+        storageKey={storageKey}
+        autoSave={autoSave}
+        showSaveIndicator={showSaveIndicator}
+      />
       <style dangerouslySetInnerHTML={{__html: `
         .excalidraw-archmind-theme {
           --color-bg-canvas: #faf9f6 !important;

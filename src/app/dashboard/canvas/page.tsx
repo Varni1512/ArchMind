@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import ExcalidrawWrapper from '@/components/canvas/ExcalidrawWrapper';
+import { STORAGE_KEYS } from '@/lib/storage/canvasPersistence';
 
 export const metadata: Metadata = {
   title: 'Infinite System Design Canvas | ArchMind',
@@ -17,7 +18,11 @@ export const metadata: Metadata = {
 export default function CanvasPage() {
   return (
     <div className="absolute inset-0 bg-[#faf9f6] overflow-hidden">
-      <ExcalidrawWrapper />
+      <ExcalidrawWrapper 
+        storageKey={STORAGE_KEYS.BLANK_CANVAS} 
+        autoSave={true} 
+        showSaveIndicator={true}
+      />
     </div>
   );
 }

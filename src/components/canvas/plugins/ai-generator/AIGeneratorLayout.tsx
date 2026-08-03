@@ -1,20 +1,53 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ExcalidrawWrapper from '../../ExcalidrawWrapper';
 import { AIControlPanel } from './panels/AIControlPanel';
 import { ArchitectureExplanationPanel } from './panels/ArchitectureExplanationPanel';
 import { AIGeneratorProvider, useAIGenerator } from './context/AIGeneratorContext';
-import { Sparkles, Info } from 'lucide-react';
+import { AIGeneratorHistoryManager } from './storage/AIGeneratorHistoryManager';
+import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState } from '@/lib/storage/canvasPersistence';
+import { Sparkles, Info, CloudCheck, Loader2 } from 'lucide-react';
 
 function WorkspaceContent() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { explanationData } = useAIGenerator();
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const hasRestoredRef = useRef(false);
+  const saverRef = useRef<CanvasDebouncedSaver | null>(null);
+  const statusTimerRef = useRef<any>(null);
+
+  const { 
+    prompt,
+    setPrompt,
+    complexity,
+    setComplexity,
+    cloudProvider,
+    setCloudProvider,
+    explanationData, 
+    setExplanationData,
+    setLoadedElements 
+  } = useAIGenerator();
 
   const handleAPI = useCallback((api: any) => {
     setExcalidrawAPI(api);
+  }, []);
+
+  // Initialize debounced auto-saver for session persistence
+  useEffect(() => {
+    saverRef.current = new CanvasDebouncedSaver(STORAGE_KEYS.AI_SESSION, 400, (success) => {
+      if (success) {
+        setSaveStatus('saved');
+        if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+        statusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2500);
+      }
+    });
+
+    return () => {
+      if (saverRef.current) saverRef.current.destroy();
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    };
   }, []);
 
   // Suppress Excalidraw's internal controlled input warning
@@ -28,6 +61,37 @@ function WorkspaceContent() {
     return () => { console.error = originalError; };
   }, []);
 
+  // Restore saved session on initial mount
+  useEffect(() => {
+    if (excalidrawAPI && !hasRestoredRef.current) {
+      hasRestoredRef.current = true;
+      const session = AIGeneratorHistoryManager.loadSession();
+      if (session) {
+        if (session.prompt && !prompt) setPrompt(session.prompt);
+        if (session.complexity) setComplexity(session.complexity);
+        if (session.cloudProvider) setCloudProvider(session.cloudProvider);
+        if (session.explanationData) setExplanationData(session.explanationData);
+
+        if (session.elements && Array.isArray(session.elements) && session.elements.length > 0) {
+          setTimeout(async () => {
+            try {
+              const { restoreElements } = await import('@excalidraw/excalidraw');
+              const validElements = restoreElements(session.elements, null);
+              excalidrawAPI.updateScene({
+                elements: validElements,
+                appState: session.appState ? { ...session.appState, viewBackgroundColor: session.appState.viewBackgroundColor || '#fffce8' } : undefined,
+              });
+              excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
+              setLoadedElements(validElements);
+            } catch (err) {
+              console.error('Error restoring AI session scene:', err);
+            }
+          }, 120);
+        }
+      }
+    }
+  }, [excalidrawAPI, prompt, setPrompt, setComplexity, setCloudProvider, setExplanationData, setLoadedElements]);
+
   // Auto-open explanation when data arrives
   useEffect(() => {
     if (explanationData) {
@@ -35,10 +99,26 @@ function WorkspaceContent() {
     }
   }, [explanationData]);
 
+  // Handle canvas changes and trigger debounced auto-save
+  const handleCanvasChange = useCallback((elements: readonly any[], appState: any) => {
+    if (saverRef.current) {
+      setSaveStatus('saving');
+      saverRef.current.save({
+        prompt,
+        complexity,
+        cloudProvider,
+        elements,
+        appState: sanitizeAppState(appState),
+        explanationData,
+        timestamp: Date.now(),
+      });
+    }
+  }, [prompt, complexity, cloudProvider, explanationData]);
+
   return (
     <div className="absolute inset-0 bg-[#faf9f6] overflow-hidden flex w-full">
       
-      {/* Left Panel - Control Panel */}
+      {/* Left Panel - Control Panel with Generate & History */}
       {isSidebarOpen && (
         <AIControlPanel 
           excalidrawAPI={excalidrawAPI} 
@@ -49,7 +129,10 @@ function WorkspaceContent() {
       {/* Center Canvas Workspace */}
       <div className="flex-1 relative h-full">
         
-        <ExcalidrawWrapper onAPI={handleAPI} />
+        <ExcalidrawWrapper 
+          onAPI={handleAPI} 
+          onChange={handleCanvasChange}
+        />
 
         {/* Sidebar Toggle Button */}
         {!isSidebarOpen && (
@@ -71,6 +154,23 @@ function WorkspaceContent() {
           >
             <Info size={20} />
           </button>
+        )}
+
+        {/* Auto-Save Status Badge */}
+        {saveStatus !== 'idle' && (
+          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-surface/90 backdrop-blur-md border border-primary/10 rounded-full shadow-sm text-xs font-medium text-primary/70 transition-all duration-300 pointer-events-none select-none">
+            {saveStatus === 'saving' ? (
+              <>
+                <Loader2 size={13} className="animate-spin text-primary" />
+                <span>Saving AI workspace...</span>
+              </>
+            ) : (
+              <>
+                <CloudCheck size={14} className="text-emerald-600" />
+                <span className="text-emerald-700">AI workspace saved to device</span>
+              </>
+            )}
+          </div>
         )}
       </div>
 
