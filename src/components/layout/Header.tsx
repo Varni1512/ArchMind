@@ -23,7 +23,9 @@ export function Header() {
           <a href="#interview" className="relative opacity-[0.82] transition-opacity duration-200 hover:opacity-100 after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-[6px] after:h-[2px] after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-250 hover:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary focus-visible:rounded-md">Interview</a>
         </div>
         <div className="flex items-center gap-[18px]">
-          {user ? (
+          {loading ? (
+            <div className="h-[38px] w-[80px] rounded-[10px] bg-primary/10 animate-pulse border border-primary/5" />
+          ) : user ? (
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
