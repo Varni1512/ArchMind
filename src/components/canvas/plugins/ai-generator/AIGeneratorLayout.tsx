@@ -6,17 +6,19 @@ import { AIControlPanel } from './panels/AIControlPanel';
 import { ArchitectureExplanationPanel } from './panels/ArchitectureExplanationPanel';
 import { AIGeneratorProvider, useAIGenerator } from './context/AIGeneratorContext';
 import { AIGeneratorHistoryManager } from './storage/AIGeneratorHistoryManager';
-import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState } from '@/lib/storage/canvasPersistence';
+import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState, areElementsEqual } from '@/lib/storage/canvasPersistence';
+import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
 import { Sparkles, Info, CloudCheck, Loader2 } from 'lucide-react';
 
 function WorkspaceContent() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const hasRestoredRef = useRef(false);
   const saverRef = useRef<CanvasDebouncedSaver | null>(null);
   const statusTimerRef = useRef<any>(null);
+  const lastSavedElementsRef = useRef<readonly any[] | undefined>(undefined);
 
   const { 
     prompt,
@@ -50,47 +52,49 @@ function WorkspaceContent() {
     };
   }, []);
 
-  // Suppress Excalidraw's internal controlled input warning
+  // Suppress Excalidraw's internal controlled input and vendor warnings
   useEffect(() => {
     const originalError = console.error;
+    const originalWarn = console.warn;
+
     console.error = (...args) => {
       if (typeof args[0] === 'string' && args[0].includes('A component is changing a controlled input')) return;
       if (typeof args[0] === 'string' && args[0].includes('Linear element is not normalized')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Fractional indices invariant')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Permissions policy violation: unload')) return;
       originalError(...args);
     };
-    return () => { console.error = originalError; };
+
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('Permissions policy violation: unload')) return;
+      originalWarn(...args);
+    };
+
+    return () => { 
+      console.error = originalError; 
+      console.warn = originalWarn;
+    };
   }, []);
 
-  // Restore saved session on initial mount
+  // Restore saved session metadata on initial mount
   useEffect(() => {
-    if (excalidrawAPI && !hasRestoredRef.current) {
+    if (!hasRestoredRef.current) {
       hasRestoredRef.current = true;
       const session = AIGeneratorHistoryManager.loadSession();
       if (session) {
+        if (session.elements && Array.isArray(session.elements)) {
+          const active = session.elements.filter((el: any) => el && !el.isDeleted);
+          if (active.length > 0) {
+            lastSavedElementsRef.current = active;
+          }
+        }
         if (session.prompt && !prompt) setPrompt(session.prompt);
         if (session.complexity) setComplexity(session.complexity);
         if (session.cloudProvider) setCloudProvider(session.cloudProvider);
         if (session.explanationData) setExplanationData(session.explanationData);
-
-        if (session.elements && Array.isArray(session.elements) && session.elements.length > 0) {
-          setTimeout(async () => {
-            try {
-              const { restoreElements } = await import('@excalidraw/excalidraw');
-              const validElements = restoreElements(session.elements, null);
-              excalidrawAPI.updateScene({
-                elements: validElements,
-                appState: session.appState ? { ...session.appState, viewBackgroundColor: session.appState.viewBackgroundColor || '#fffce8' } : undefined,
-              });
-              excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
-              setLoadedElements(validElements);
-            } catch (err) {
-              console.error('Error restoring AI session scene:', err);
-            }
-          }, 120);
-        }
       }
     }
-  }, [excalidrawAPI, prompt, setPrompt, setComplexity, setCloudProvider, setExplanationData, setLoadedElements]);
+  }, []);
 
   // Auto-open explanation when data arrives
   useEffect(() => {
@@ -101,7 +105,11 @@ function WorkspaceContent() {
 
   // Handle canvas changes and trigger debounced auto-save
   const handleCanvasChange = useCallback((elements: readonly any[], appState: any) => {
-    if (saverRef.current) {
+    const isUnchanged = areElementsEqual(lastSavedElementsRef.current, elements);
+    const isBlank = (!elements || elements.length === 0) && (!lastSavedElementsRef.current || lastSavedElementsRef.current.length === 0);
+
+    if (saverRef.current && !isUnchanged && !isBlank) {
+      lastSavedElementsRef.current = elements;
       setSaveStatus('saving');
       saverRef.current.save({
         prompt,
@@ -130,6 +138,7 @@ function WorkspaceContent() {
       <div className="flex-1 relative h-full">
         
         <ExcalidrawWrapper 
+          storageKey={STORAGE_KEYS.AI_SESSION}
           onAPI={handleAPI} 
           onChange={handleCanvasChange}
         />

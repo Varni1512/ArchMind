@@ -4,6 +4,7 @@ import {
   AIHistoryRecord 
 } from '../storage/AIGeneratorHistoryManager';
 import { useAIGenerator } from '../context/AIGeneratorContext';
+import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
 import { 
   History, 
   Trash2, 
@@ -73,8 +74,7 @@ export function AIHistoryPanel({ excalidrawAPI, onSelectRecord }: Props) {
 
     if (item.elements && Array.isArray(item.elements)) {
       try {
-        const { restoreElements } = await import('@excalidraw/excalidraw');
-        const validElements = restoreElements(item.elements, null);
+        const validElements = await safeRestoreElements(item.elements, null);
         
         excalidrawAPI.updateScene({
           elements: validElements,

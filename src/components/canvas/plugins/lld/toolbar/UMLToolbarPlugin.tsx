@@ -15,6 +15,7 @@ import {
   generateForkNode, generateJoinNode, generateUseCaseNode,
   generateComponentNode, generateDeviceNode, generateArtifactNode
 } from '../nodes/generators';
+import { safeMergeElements } from '@/lib/canvas/elementOrdering';
 
 // Dummy generator for unknown diagrams
 const generateGenericNode = (x: number, y: number, name: string) => generateClassNode(x, y, name);
@@ -77,11 +78,10 @@ export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
         }
 
         if (newElements.length > 0) {
-          import('@excalidraw/excalidraw').then(({ convertToExcalidrawElements }) => {
-            const validElements = convertToExcalidrawElements(newElements);
-            const currentElements = excalidrawAPI.getSceneElements();
-            excalidrawAPI.updateScene({ elements: [...currentElements, ...validElements] });
-          }).catch(err => console.error("Error loading Excalidraw utils", err));
+          const currentElements = excalidrawAPI.getSceneElements();
+          safeMergeElements(currentElements, newElements).then((merged) => {
+            excalidrawAPI.updateScene({ elements: merged });
+          }).catch(err => console.error("Error updating scene with UML elements", err));
         }
 
         setActiveNodeTool(null);

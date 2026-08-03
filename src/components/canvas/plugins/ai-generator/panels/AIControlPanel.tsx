@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAIGenerator } from '../context/AIGeneratorContext';
 import { Sparkles, Settings, History, PanelLeftClose, AlertTriangle, X } from 'lucide-react';
 import { convertJSONToExcalidraw } from '../utils/JSONToExcalidraw';
+import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
 import { AIGeneratorHistoryManager } from '../storage/AIGeneratorHistoryManager';
 import { AIHistoryPanel } from './AIHistoryPanel';
 
@@ -69,7 +70,8 @@ export function AIControlPanel({ excalidrawAPI, onClose }: AIControlPanelProps) 
       }
       
       // Convert JSON to Excalidraw Elements
-      const elements = convertJSONToExcalidraw(data);
+      const rawElements = convertJSONToExcalidraw(data);
+      const elements = await safeRestoreElements(rawElements, null);
       
       // Update Canvas
       excalidrawAPI.updateScene({ elements });

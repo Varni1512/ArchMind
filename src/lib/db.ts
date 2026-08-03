@@ -1,12 +1,5 @@
 import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
+import { initAdminAndSettings } from './init-admin';
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -19,9 +12,15 @@ if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
-import { initAdminAndSettings } from './init-admin';
-
 async function dbConnect() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+
+  if (!MONGODB_URI) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env.local'
+    );
+  }
+
   if (cached.conn) {
     // Non-blocking background check
     initAdminAndSettings().catch(() => {});
@@ -33,8 +32,8 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose;
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+      return m;
     });
   }
   

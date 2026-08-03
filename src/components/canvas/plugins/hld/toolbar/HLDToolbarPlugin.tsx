@@ -7,6 +7,7 @@ import {
   Circle, HelpCircle, ArrowLeftRight, Navigation, Server, Database, Cloud, Activity, Settings, Network, Shield, Clock, ShieldAlert, GitPullRequest, Search, CreditCard, Mail, MessageSquare, Key, Bell, Webhook
 } from 'lucide-react';
 import { generateHLDNode } from '../nodes/generators';
+import { safeMergeElements } from '@/lib/canvas/elementOrdering';
 
 interface Props {
   excalidrawAPI?: any;
@@ -56,15 +57,13 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
             const { elements: newElements, file } = await generateHLDNode(x, y, toolDef);
             
             if (newElements.length > 0) {
-              const excalidrawUtils = await import('@excalidraw/excalidraw');
-              const validElements = excalidrawUtils.restoreElements(newElements, null);
-              
               if (file) {
                 excalidrawAPI.addFiles([file]);
               }
 
               const currentElements = excalidrawAPI.getSceneElements();
-              excalidrawAPI.updateScene({ elements: [...currentElements, ...validElements] });
+              const merged = await safeMergeElements(currentElements, newElements);
+              excalidrawAPI.updateScene({ elements: merged });
             }
           } catch (err) {
             console.error("Error generating HLD node", err);

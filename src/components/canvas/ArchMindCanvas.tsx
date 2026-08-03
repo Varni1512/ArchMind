@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import '@/components/providers/UnloadPolicyFix';
 import { Excalidraw, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { 
@@ -6,8 +7,10 @@ import {
   sanitizeAppState, 
   CanvasDebouncedSaver, 
   STORAGE_KEYS,
-  PersistedCanvasData 
+  PersistedCanvasData,
+  areElementsEqual
 } from '@/lib/storage/canvasPersistence';
+import { normalizeFractionalIndices } from '@/lib/canvas/elementOrdering';
 import { CloudCheck, Cloud, Loader2 } from 'lucide-react';
 
 interface Props {
@@ -17,6 +20,7 @@ interface Props {
   storageKey?: string;
   autoSave?: boolean;
   showSaveIndicator?: boolean;
+  workspaceTitle?: string;
 }
 
 export default function ArchMindCanvas({ 
@@ -25,11 +29,13 @@ export default function ArchMindCanvas({
   initialData: propInitialData, 
   storageKey, 
   autoSave = false,
-  showSaveIndicator = false 
+  showSaveIndicator = false,
+  workspaceTitle
 }: Props) {
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saverRef = useRef<CanvasDebouncedSaver | null>(null);
   const statusTimerRef = useRef<any>(null);
+  const lastSavedElementsRef = useRef<readonly any[] | undefined>(undefined);
 
   // Initialize storage saver if autoSave is enabled or storageKey is provided
   useEffect(() => {
@@ -55,31 +61,79 @@ export default function ArchMindCanvas({
     };
   }, [storageKey, autoSave]);
 
+  // Suppress Excalidraw benign internal dev warnings
+  useEffect(() => {
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.error = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('A component is changing a controlled input')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Linear element is not normalized')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Fractional indices invariant')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Permissions policy violation: unload')) return;
+      originalError(...args);
+    };
+
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('Permissions policy violation: unload')) return;
+      originalWarn(...args);
+    };
+
+    return () => { 
+      console.error = originalError; 
+      console.warn = originalWarn;
+    };
+  }, []);
+
   // Compute initial data from storage if not provided via props
   const computedInitialData = useMemo(() => {
     if (propInitialData) {
-      return propInitialData;
-    }
-
-    if (storageKey) {
-      const saved = loadCanvasData<PersistedCanvasData>(storageKey);
-      if (saved && Array.isArray(saved.elements) && saved.elements.length > 0) {
+      const activeElements = Array.isArray(propInitialData.elements)
+        ? propInitialData.elements.filter((el: any) => el && !el.isDeleted)
+        : [];
+      if (activeElements.length > 0) {
+        const normalized = normalizeFractionalIndices(activeElements);
+        lastSavedElementsRef.current = normalized;
         return {
-          elements: saved.elements,
+          ...propInitialData,
+          elements: normalized,
           appState: {
             viewBackgroundColor: '#fffce8',
-            ...(saved.appState || {}),
+            showWelcomeScreen: false,
+            ...(propInitialData.appState || {}),
           },
-          files: saved.files || {},
-          scrollToContent: true,
         };
       }
     }
 
+    if (storageKey) {
+      const saved = loadCanvasData<PersistedCanvasData>(storageKey);
+      if (saved && Array.isArray(saved.elements)) {
+        const activeElements = saved.elements.filter((el: any) => el && !el.isDeleted);
+        if (activeElements.length > 0) {
+          const normalized = normalizeFractionalIndices(activeElements);
+          lastSavedElementsRef.current = normalized;
+          return {
+            elements: normalized,
+            appState: {
+              viewBackgroundColor: '#fffce8',
+              showWelcomeScreen: false,
+              ...(saved.appState || {}),
+            },
+            files: saved.files || {},
+            scrollToContent: true,
+          };
+        }
+      }
+    }
+
     return { 
+      elements: [],
       appState: { 
-        viewBackgroundColor: '#fffce8' 
-      } 
+        viewBackgroundColor: '#fffce8',
+        showWelcomeScreen: true,
+      },
+      files: {},
     };
   }, [propInitialData, storageKey]);
 
@@ -100,7 +154,11 @@ export default function ArchMindCanvas({
   }, []);
 
   const handleChange = useCallback((elements: readonly any[], appState: any, files: any) => {
-    if (autoSave && saverRef.current) {
+    const isUnchanged = areElementsEqual(lastSavedElementsRef.current, elements);
+    const isBlank = (!elements || elements.length === 0) && (!lastSavedElementsRef.current || lastSavedElementsRef.current.length === 0);
+
+    if (autoSave && saverRef.current && !isUnchanged && !isBlank) {
+      lastSavedElementsRef.current = elements;
       setSaveStatus('saving');
       saverRef.current.save({
         elements,
@@ -115,6 +173,14 @@ export default function ArchMindCanvas({
     }
   }, [autoSave, onChange]);
 
+  const resolvedHeading = useMemo(() => {
+    if (workspaceTitle) return workspaceTitle;
+    if (storageKey === STORAGE_KEYS.LLD_AUTOSAVE) return 'Low-Level Design (LLD) Workspace';
+    if (storageKey === STORAGE_KEYS.HLD_AUTOSAVE) return 'High-Level Design (HLD) Workspace';
+    if (storageKey === STORAGE_KEYS.AI_SESSION) return 'AI Architecture Studio';
+    return 'Blank Canvas Workspace';
+  }, [workspaceTitle, storageKey]);
+
   return (
     <div className="relative w-full h-full">
       <Excalidraw 
@@ -122,6 +188,9 @@ export default function ArchMindCanvas({
         theme="light"
         name="ArchMind Canvas"
         initialData={computedInitialData}
+        UIOptions={{
+          welcomeScreen: true,
+        }}
         excalidrawAPI={onAPI}
         onChange={handleChange}
       >
@@ -148,7 +217,7 @@ export default function ArchMindCanvas({
               </div>
             </WelcomeScreen.Center.Logo>
             <WelcomeScreen.Center.Heading>
-              Blank Canvas Workspace
+              {resolvedHeading}
             </WelcomeScreen.Center.Heading>
           </WelcomeScreen.Center>
         </WelcomeScreen>

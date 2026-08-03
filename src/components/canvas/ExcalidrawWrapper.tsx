@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import '@/components/providers/UnloadPolicyFix';
 import '@excalidraw/excalidraw/index.css';
 
 interface ExcalidrawWrapperProps {
@@ -11,6 +12,7 @@ interface ExcalidrawWrapperProps {
   storageKey?: string;
   autoSave?: boolean;
   showSaveIndicator?: boolean;
+  workspaceTitle?: string;
 }
 
 const ArchMindCanvas = dynamic(
@@ -31,7 +33,8 @@ export default function ExcalidrawWrapper({
   initialData, 
   storageKey, 
   autoSave = false, 
-  showSaveIndicator = false 
+  showSaveIndicator = false,
+  workspaceTitle
 }: ExcalidrawWrapperProps) {
   return (
     <div className="w-full h-full excalidraw-archmind-theme">
@@ -42,6 +45,7 @@ export default function ExcalidrawWrapper({
         storageKey={storageKey}
         autoSave={autoSave}
         showSaveIndicator={showSaveIndicator}
+        workspaceTitle={workspaceTitle}
       />
       <style dangerouslySetInnerHTML={{__html: `
         .excalidraw-archmind-theme {

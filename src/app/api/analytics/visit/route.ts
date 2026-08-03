@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import VisitorLog from '@/models/VisitorLog';
 import { getAuthUser } from '@/lib/auth-check';
 
 export async function POST(req: Request) {
@@ -10,6 +8,11 @@ export async function POST(req: Request) {
 
     if (!visitorId || !path) {
       return NextResponse.json({ message: 'visitorId and path are required' }, { status: 400 });
+    }
+
+    if (!process.env.MONGODB_URI) {
+      // Return 200 gracefully if DB is not configured in local development
+      return NextResponse.json({ success: true, tracking: 'mock' }, { status: 200 });
     }
 
     const forwarded = req.headers.get('x-forwarded-for');
@@ -25,30 +28,37 @@ export async function POST(req: Request) {
     // Check optional authenticated user
     const authUser = await getAuthUser(req).catch(() => null);
 
-    await dbConnect();
+    try {
+      const dbConnect = (await import('@/lib/db')).default;
+      const VisitorLog = (await import('@/models/VisitorLog')).default;
 
-    // Check if same visitor on same path in last 3 minutes (avoid spamming DB on rapid reloads)
-    const recentThreshold = new Date(Date.now() - 3 * 60 * 1000);
-    const existingRecent = await VisitorLog.findOne({
-      visitorId: sanitizedVisitorId,
-      path: sanitizedPath,
-      createdAt: { $gte: recentThreshold },
-    });
+      await dbConnect();
 
-    if (!existingRecent) {
-      await VisitorLog.create({
+      // Check if same visitor on same path in last 3 minutes (avoid spamming DB on rapid reloads)
+      const recentThreshold = new Date(Date.now() - 3 * 60 * 1000);
+      const existingRecent = await VisitorLog.findOne({
         visitorId: sanitizedVisitorId,
-        ip: sanitizedIp,
-        userAgent: sanitizedUserAgent,
         path: sanitizedPath,
-        referrer: sanitizedReferrer,
-        userId: authUser ? authUser.id : null,
+        createdAt: { $gte: recentThreshold },
       });
+
+      if (!existingRecent) {
+        await VisitorLog.create({
+          visitorId: sanitizedVisitorId,
+          ip: sanitizedIp,
+          userAgent: sanitizedUserAgent,
+          path: sanitizedPath,
+          referrer: sanitizedReferrer,
+          userId: authUser ? authUser.id : null,
+        });
+      }
+    } catch (dbErr: any) {
+      // Telemetry errors should not fail with 500
+      return NextResponse.json({ success: false, reason: 'db_unavailable' }, { status: 200 });
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
-    console.error('Visitor logging error:', error);
-    return NextResponse.json({ message: error.message || 'Error logging visit' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error?.message || 'Error logging visit' }, { status: 200 });
   }
 }

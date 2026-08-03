@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { HLDASTEngine } from '../ast/HLDASTEngine';
 import { AIEvaluationResponse } from '@/services/ai/types';
 import { useHLDWorkspace } from '../context/HLDWorkspaceContext';
+import { normalizeFractionalIndices } from '@/lib/canvas/elementOrdering';
 
 export function useHLDAIEvaluation(excalidrawAPI: any, diagramType: string, questionId?: string) {
   const [loading, setLoading] = useState(false);
@@ -143,7 +144,7 @@ export function useHLDAIEvaluation(excalidrawAPI: any, diagramType: string, ques
             return el;
           });
           
-          excalidrawAPI.updateScene({ elements: updatedElements });
+          excalidrawAPI.updateScene({ elements: normalizeFractionalIndices(updatedElements) });
         }
         
         // Success

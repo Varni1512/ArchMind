@@ -5,6 +5,7 @@ import { starterTemplates } from '../data/starterTemplates';
 import { DIAGRAM_TOOLS_MAP } from '../toolbar/DiagramTools';
 import { generateHLDNode } from '../nodes/generators';
 import { createArrow } from '../utils/elementGenerator';
+import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
 
 interface Props {
   excalidrawAPI: any;
@@ -116,8 +117,8 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
           }
         }
 
-        import('@excalidraw/excalidraw').then(({ restoreElements }) => {
-          const validElements = restoreElements(allElements, null);
+        try {
+          const validElements = await safeRestoreElements(allElements, null);
           if (allFiles.length > 0) {
             excalidrawAPI.addFiles(allFiles);
           }
@@ -125,7 +126,9 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
           setTimeout(() => {
             excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
           }, 100);
-        }).catch(err => console.error("Error loading templates", err));
+        } catch (err) {
+          console.error("Error loading templates", err);
+        }
       } else {
         // Blank Canvas
         excalidrawAPI.updateScene({ elements: [], appState: { viewBackgroundColor: "#fffce8" } });

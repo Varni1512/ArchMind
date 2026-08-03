@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Server, Zap, HardDrive } from 'lucide-react';
+import { normalizeFractionalIndices } from '@/lib/canvas/elementOrdering';
 
 interface Props {
   excalidrawAPI: any;
@@ -106,7 +107,7 @@ export function NodePropertiesMenu({ excalidrawAPI }: Props) {
       
       if (updatedCount > 0) {
         // Force an update to the canvas with completely new element references
-        excalidrawAPI.updateScene({ elements: newElements });
+        excalidrawAPI.updateScene({ elements: normalizeFractionalIndices(newElements) });
         setCurrentSize(newSize);
       }
     } catch (e) {

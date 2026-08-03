@@ -7,12 +7,14 @@ import NextAuthProvider from "@/components/providers/NextAuthProvider";
 import { VisitorTracker } from "@/components/analytics/VisitorTracker";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { UnloadPolicyFix } from "@/components/providers/UnloadPolicyFix";
 import "./globals.css";
 
 const caveat = Caveat({
   subsets: ['latin'],
   variable: '--font-handwriting',
   display: 'swap',
+  preload: false,
 });
 
 export const viewport: Viewport = {
@@ -126,6 +128,7 @@ export default function RootLayout({
         <JsonLd />
       </head>
       <body className={`${caveat.variable}`}>
+        <UnloadPolicyFix />
         <NextAuthProvider>
           <AuthProvider>
             <VisitorTracker />

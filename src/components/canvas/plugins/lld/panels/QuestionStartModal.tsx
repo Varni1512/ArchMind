@@ -3,6 +3,8 @@ import { useLLDWorkspace } from '../context/LLDWorkspaceContext';
 import { X, File, FilePlus } from 'lucide-react';
 import { starterTemplates } from '../data/starterTemplates';
 
+import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
+
 interface Props {
   excalidrawAPI: any;
 }
@@ -18,16 +20,21 @@ export function QuestionStartModal({ excalidrawAPI }: Props) {
 
   if (!isStartModalOpen || !pendingQuestionId) return null;
 
-  const handleSelectMode = (mode: 'blank' | 'template') => {
+  const handleSelectMode = async (mode: 'blank' | 'template') => {
     setActiveQuestionId(pendingQuestionId);
     
     if (excalidrawAPI) {
       if (mode === 'template') {
         const rawElements = starterTemplates[pendingQuestionId] || starterTemplates['default'];
-        import('@excalidraw/excalidraw').then(({ convertToExcalidrawElements }) => {
-          const validElements = convertToExcalidrawElements(rawElements);
+        try {
+          const validElements = await safeRestoreElements(rawElements, null);
           excalidrawAPI.updateScene({ elements: validElements, appState: { viewBackgroundColor: "#fffce8" } });
-        }).catch(err => console.error("Error loading templates", err));
+          setTimeout(() => {
+            excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
+          }, 80);
+        } catch (err) {
+          console.error("Error loading template elements", err);
+        }
       } else {
         // Blank Canvas
         excalidrawAPI.updateScene({ elements: [], appState: { viewBackgroundColor: "#fffce8" } });

@@ -10,22 +10,24 @@ import { TopDiagramSwitcher } from './panels/TopDiagramSwitcher';
 import { QuestionStartModal } from './panels/QuestionStartModal';
 import { LLDWorkspaceProvider, useLLDWorkspace } from './context/LLDWorkspaceContext';
 import { LLDStorageManager } from './storage/LLDStorageManager';
-import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState } from '@/lib/storage/canvasPersistence';
+import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState, areElementsEqual } from '@/lib/storage/canvasPersistence';
+import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
 import { Sparkles, X, BookOpen, CloudCheck, Loader2 } from 'lucide-react';
 
 function WorkspaceContent() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isExplorerOpen, setIsExplorerOpen] = useState(false);
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const hasRestoredRef = useRef(false);
   const saverRef = useRef<CanvasDebouncedSaver | null>(null);
   const statusTimerRef = useRef<any>(null);
+  const lastSavedElementsRef = useRef<readonly any[] | undefined>(undefined);
 
   const { 
     loadedHistory, 
-    setLoadedHistory,
-    activeQuestionId,
+    setLoadedHistory, 
+    activeQuestionId, 
     setActiveQuestionId,
     activeDiagramType,
     setActiveDiagramType
@@ -51,46 +53,51 @@ function WorkspaceContent() {
     };
   }, []);
 
-  // Suppress Excalidraw's internal controlled input warning
+  // Suppress Excalidraw's internal controlled input and vendor warnings
   useEffect(() => {
     const originalError = console.error;
+    const originalWarn = console.warn;
+
     console.error = (...args) => {
       if (typeof args[0] === 'string' && args[0].includes('A component is changing a controlled input')) return;
       if (typeof args[0] === 'string' && args[0].includes('Linear element is not normalized')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Fractional indices invariant')) return;
+      if (typeof args[0] === 'string' && args[0].includes('Permissions policy violation: unload')) return;
       originalError(...args);
     };
-    return () => { console.error = originalError; };
+
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('Permissions policy violation: unload')) return;
+      originalWarn(...args);
+    };
+
+    return () => { 
+      console.error = originalError; 
+      console.warn = originalWarn;
+    };
   }, []);
 
-  // Restore autosaved diagram on initial mount
+  // Restore autosaved diagram metadata on initial mount
   useEffect(() => {
-    if (excalidrawAPI && !hasRestoredRef.current && !loadedHistory) {
+    if (!hasRestoredRef.current && !loadedHistory) {
       hasRestoredRef.current = true;
       const saved = LLDStorageManager.loadAutoSave();
-      if (saved && Array.isArray(saved.elements) && saved.elements.length > 0) {
-        setTimeout(async () => {
-          try {
-            const excalidrawUtils = await import('@excalidraw/excalidraw');
-            const validElements = excalidrawUtils.restoreElements(saved.elements, null);
-            excalidrawAPI.updateScene({ 
-              elements: validElements,
-              appState: saved.appState ? { ...saved.appState, viewBackgroundColor: saved.appState.viewBackgroundColor || '#fffce8' } : undefined
-            });
-            excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
-            
-            if (saved.metadata?.linkedQuestionId && !activeQuestionId) {
-              setActiveQuestionId(saved.metadata.linkedQuestionId);
-            }
-            if (saved.metadata?.diagramType && saved.metadata.diagramType !== activeDiagramType) {
-              setActiveDiagramType(saved.metadata.diagramType as any);
-            }
-          } catch (e) {
-            console.error("Error restoring LLD autoSave:", e);
-          }
-        }, 120);
+      if (saved?.elements && Array.isArray(saved.elements)) {
+        const active = saved.elements.filter((el: any) => el && !el.isDeleted);
+        if (active.length > 0) {
+          lastSavedElementsRef.current = active;
+        }
+      }
+      if (saved?.metadata) {
+        if (saved.metadata.linkedQuestionId && !activeQuestionId) {
+          setActiveQuestionId(saved.metadata.linkedQuestionId);
+        }
+        if (saved.metadata.diagramType && saved.metadata.diagramType !== activeDiagramType) {
+          setActiveDiagramType(saved.metadata.diagramType as any);
+        }
       }
     }
-  }, [excalidrawAPI, loadedHistory, activeQuestionId, activeDiagramType, setActiveQuestionId, setActiveDiagramType]);
+  }, []);
 
   // Restore history to canvas when loadedHistory changes
   useEffect(() => {
@@ -98,8 +105,8 @@ function WorkspaceContent() {
       if (loadedHistory.elements && Array.isArray(loadedHistory.elements) && loadedHistory.elements.length > 0) {
         setTimeout(async () => {
           try {
-            const excalidrawUtils = await import('@excalidraw/excalidraw');
-            const validElements = excalidrawUtils.restoreElements(loadedHistory.elements, null);
+            const validElements = await safeRestoreElements(loadedHistory.elements, null);
+            lastSavedElementsRef.current = validElements;
             excalidrawAPI.updateScene({ elements: validElements });
             excalidrawAPI.scrollToContent(validElements, { fitToContent: true });
             
@@ -119,7 +126,11 @@ function WorkspaceContent() {
 
   // Handle canvas changes and trigger debounced auto-save
   const handleCanvasChange = useCallback((elements: readonly any[], appState: any) => {
-    if (saverRef.current) {
+    const isUnchanged = areElementsEqual(lastSavedElementsRef.current, elements);
+    const isBlank = (!elements || elements.length === 0) && (!lastSavedElementsRef.current || lastSavedElementsRef.current.length === 0);
+
+    if (saverRef.current && !isUnchanged && !isBlank) {
+      lastSavedElementsRef.current = elements;
       setSaveStatus('saving');
       saverRef.current.save({
         elements,
@@ -156,6 +167,7 @@ function WorkspaceContent() {
         <QuestionStartModal excalidrawAPI={excalidrawAPI} />
         
         <ExcalidrawWrapper 
+          storageKey={STORAGE_KEYS.LLD_AUTOSAVE}
           onAPI={handleAPI} 
           onChange={handleCanvasChange}
         />
