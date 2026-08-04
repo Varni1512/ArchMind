@@ -45,6 +45,8 @@ export class HLDASTEngine {
           const dataElement = groupElements.find(e => e.customData?.type === 'node');
           
           if (dataElement) {
+            const textElement = groupElements.find(e => e.type === 'text');
+            const label = textElement?.text || textElement?.originalText || dataElement.customData.label;
             const minX = Math.min(...groupElements.map(e => e.x));
             const minY = Math.min(...groupElements.map(e => e.y));
             const maxX = Math.max(...groupElements.map(e => e.x + e.width));
@@ -53,7 +55,7 @@ export class HLDASTEngine {
             nodes.push({
               id: topLevelGroupId,
               type: dataElement.customData.id,
-              label: dataElement.customData.label,
+              label: label,
               x: minX,
               y: minY,
               width: maxX - minX,

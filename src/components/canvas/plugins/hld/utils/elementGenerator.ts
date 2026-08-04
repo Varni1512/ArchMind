@@ -18,7 +18,7 @@ const defaultStyles = {
   versionNonce: Math.floor(Math.random() * 1000000000),
   seed: Math.floor(Math.random() * 1000000000),
   angle: 0,
-  roundness: { type: 3 }, // standard excalidraw roundness
+  roundness: { type: 2 }, // adaptive clean roundness
   startBinding: null,
   endBinding: null,
   frameId: null,
@@ -45,7 +45,7 @@ export function createText(x: number, y: number, text: string, customProps: any 
     type: "text",
     x,
     y,
-    width: text.length * 10,
+    width: Math.max(40, text.length * 10),
     height: 24,
     text,
     fontSize: 16,
@@ -54,12 +54,109 @@ export function createText(x: number, y: number, text: string, customProps: any 
     verticalAlign: "middle",
     baseline: 18,
     lineHeight: 1.25,
+    autoResize: true,
     containerId: null,
     originalText: text,
     ...defaultStyles,
     strokeWidth: 1,
     ...customProps,
   };
+}
+
+export function createContainerWithBoundText(
+  shapeType: 'rectangle' | 'ellipse' | 'diamond',
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  text: string,
+  options: {
+    groupIds?: string[];
+    customData?: any;
+    backgroundColor?: string;
+    strokeColor?: string;
+    fillStyle?: string;
+    strokeWidth?: number;
+    fontSize?: number;
+    fontFamily?: number;
+    textAlign?: 'left' | 'center' | 'right';
+    verticalAlign?: 'top' | 'middle' | 'bottom';
+    roundness?: any;
+    roughness?: number;
+    containerProps?: any;
+    textProps?: any;
+  } = {}
+) {
+  const containerId = generateId();
+  const textId = generateId();
+  const groupIds = options.groupIds || [];
+
+  const fontSize = options.fontSize || 14;
+  const textAlign = options.textAlign || 'center';
+  const verticalAlign = options.verticalAlign || 'middle';
+
+  // Calculate actual text dimensions
+  const lines = (text || '').split('\n');
+  const lineCount = Math.max(1, lines.length);
+  const maxLineChars = Math.max(...lines.map(l => l.length), 1);
+  const textWidth = Math.round(maxLineChars * (fontSize * 0.55) + 16);
+  const textHeight = Math.round(lineCount * (fontSize * 1.32));
+
+  // Position text strictly within container
+  const textX = textAlign === 'center'
+    ? Math.round(x + (width - textWidth) / 2)
+    : (textAlign === 'right' ? Math.round(x + width - textWidth - 12) : Math.round(x + 12));
+
+  const textY = verticalAlign === 'middle'
+    ? Math.round(y + (height - textHeight) / 2)
+    : (verticalAlign === 'bottom' ? Math.round(y + height - textHeight - 8) : Math.round(y + 8));
+
+  const container = {
+    id: containerId,
+    type: shapeType,
+    x,
+    y,
+    width,
+    height,
+    ...defaultStyles,
+    backgroundColor: options.backgroundColor || '#ffffff',
+    strokeColor: options.strokeColor || '#1e293b',
+    fillStyle: options.fillStyle || 'solid',
+    strokeWidth: options.strokeWidth ?? 2,
+    roundness: options.roundness !== undefined ? options.roundness : (shapeType === 'rectangle' ? { type: 2 } : null),
+    roughness: options.roughness ?? 0,
+    boundElements: [{ type: 'text', id: textId }],
+    groupIds,
+    customData: options.customData,
+    ...(options.containerProps || {}),
+  };
+
+  const textElement = {
+    id: textId,
+    type: 'text',
+    x: textX,
+    y: textY,
+    width: textWidth,
+    height: textHeight,
+    text,
+    originalText: text,
+    fontSize: fontSize,
+    fontFamily: options.fontFamily || 1,
+    textAlign: textAlign,
+    verticalAlign: verticalAlign,
+    baseline: 18,
+    lineHeight: 1.25,
+    autoResize: true,
+    containerId: containerId,
+    ...defaultStyles,
+    strokeWidth: 1,
+    strokeColor: options.strokeColor || '#1e293b',
+    groupIds,
+    customData: options.customData,
+    ...(options.textProps || {}),
+  };
+
+  return { container, textElement };
 }
 
 export function createLine(x: number, y: number, dx: number, dy: number, customProps: any = {}) {
@@ -73,18 +170,17 @@ export function createLine(x: number, y: number, dx: number, dy: number, customP
   return {
     id: generateId(),
     type: "line",
-    x: x, // Excalidraw linear elements have x, y at the first point
+    x: x,
     y: y,
     width: maxX - minX,
     height: maxY - minY,
-    points: points, // [0,0] is guaranteed as points[0] is [0,0]
+    points: points,
     ...defaultStyles,
     ...customProps,
   };
 }
 
 export function createArrow(x: number, y: number, points: number[][], customProps: any = {}) {
-  // Ensure points start at [0,0]
   const startX = points[0][0];
   const startY = points[0][1];
   const normalizedPoints = points.map(p => [p[0] - startX, p[1] - startY]);

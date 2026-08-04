@@ -118,19 +118,24 @@ export async function generateHLDNode(x: number, y: number, tool: ToolDefinition
     fillStyle: 'solid',
     roughness: 0,
     strokeWidth: 0,
-    roundness: { type: 3 },
+    roundness: { type: 2 },
     customData
   }));
 
+  const mainBoxId = generateId();
+  const textId = generateId();
+
   // 2. Main Box
   elements.push(createRectangle(x, y, width, height, { 
+    id: mainBoxId,
     groupIds: [groupId],
     backgroundColor: colors.bg,
     strokeColor: colors.border,
     fillStyle: "solid",
     roughness: 0,
     strokeWidth: 1.5,
-    roundness: { type: 3 },
+    roundness: { type: 2 },
+    boundElements: [{ type: 'text', id: textId }],
     customData
   }));
 
@@ -155,17 +160,21 @@ export async function generateHLDNode(x: number, y: number, tool: ToolDefinition
     }
   }
 
-  // 4. Text (Helvetica, left aligned next to icon, vertically centered)
+  // 4. Text (Helvetica, left aligned next to icon, bound to main box container)
   const hasIcon = !!file;
   const textX = hasIcon ? x + 60 : x + 20;
-  const textY = y + 24; // Perfectly centered for single line text (height 72)
+  const textY = y + 24; // Centered for single line text
   
   elements.push(createText(textX, textY, tool.label, {
+    id: textId,
     groupIds: [groupId],
     fontSize: 16,
     fontFamily: 2, // 2 = Helvetica (clean, professional)
     textAlign: "left",
+    verticalAlign: "middle",
     strokeColor: colors.text,
+    containerId: mainBoxId,
+    autoResize: true,
     customData
   }));
 

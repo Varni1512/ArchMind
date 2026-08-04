@@ -11,6 +11,7 @@ import {
   areElementsEqual
 } from '@/lib/storage/canvasPersistence';
 import { normalizeFractionalIndices } from '@/lib/canvas/elementOrdering';
+import { reconcileCanvasElements } from '@/lib/canvas/elementReconciliation';
 import { AIGeneratorHistoryManager } from './plugins/ai-generator/storage/AIGeneratorHistoryManager';
 import { CloudCheck, Cloud, Loader2 } from 'lucide-react';
 
@@ -37,6 +38,14 @@ export default function ArchMindCanvas({
   const saverRef = useRef<CanvasDebouncedSaver | null>(null);
   const statusTimerRef = useRef<any>(null);
   const lastSavedElementsRef = useRef<readonly any[] | undefined>(undefined);
+  const internalApiRef = useRef<any>(null);
+
+  const handleAPI = useCallback((api: any) => {
+    internalApiRef.current = api;
+    if (onAPI) {
+      onAPI(api);
+    }
+  }, [onAPI]);
 
   // Initialize storage saver if autoSave is enabled or storageKey is provided
   useEffect(() => {
@@ -93,7 +102,8 @@ export default function ArchMindCanvas({
         ? propInitialData.elements.filter((el: any) => el && !el.isDeleted)
         : [];
       if (activeElements.length > 0) {
-        const normalized = normalizeFractionalIndices(activeElements);
+        const { elements: reconciled } = reconcileCanvasElements(activeElements);
+        const normalized = normalizeFractionalIndices(reconciled);
         lastSavedElementsRef.current = normalized;
         return {
           ...propInitialData,
@@ -115,7 +125,8 @@ export default function ArchMindCanvas({
       if (saved && Array.isArray(saved.elements)) {
         const activeElements = saved.elements.filter((el: any) => el && !el.isDeleted);
         if (activeElements.length > 0) {
-          const normalized = normalizeFractionalIndices(activeElements);
+          const { elements: reconciled } = reconcileCanvasElements(activeElements);
+          const normalized = normalizeFractionalIndices(reconciled);
           lastSavedElementsRef.current = normalized;
           return {
             elements: normalized,
@@ -157,15 +168,41 @@ export default function ArchMindCanvas({
     return () => document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
   }, []);
 
+  const isReconcilingRef = useRef(false);
+  const wasEditingRef = useRef(false);
+
   const handleChange = useCallback((elements: readonly any[], appState: any, files: any) => {
-    const isUnchanged = areElementsEqual(lastSavedElementsRef.current, elements);
-    const isBlank = (!elements || elements.length === 0) && (!lastSavedElementsRef.current || lastSavedElementsRef.current.length === 0);
+    // If this onChange was triggered by our own reconciliation updateScene, ignore to prevent feedback loop
+    if (isReconcilingRef.current) {
+      isReconcilingRef.current = false;
+      if (onChange) {
+        onChange(elements, appState, files);
+      }
+      return;
+    }
+
+    let currentElements = elements;
+    const editingElementId = appState?.editingElement?.id || null;
+
+    // Run layout reconciliation live on all elements; active editing text is untouched to preserve cursor
+    const { elements: reconciled, changed } = reconcileCanvasElements(elements, editingElementId);
+
+    if (changed) {
+      currentElements = reconciled;
+      if (internalApiRef.current) {
+        isReconcilingRef.current = true;
+        internalApiRef.current.updateScene({ elements: reconciled });
+      }
+    }
+
+    const isUnchanged = areElementsEqual(lastSavedElementsRef.current, currentElements);
+    const isBlank = (!currentElements || currentElements.length === 0) && (!lastSavedElementsRef.current || lastSavedElementsRef.current.length === 0);
 
     if (autoSave && saverRef.current && !isUnchanged && !isBlank) {
-      lastSavedElementsRef.current = elements;
+      lastSavedElementsRef.current = currentElements;
       setSaveStatus('saving');
       saverRef.current.save({
-        elements,
+        elements: currentElements,
         appState: sanitizeAppState(appState),
         files,
         timestamp: Date.now(),
@@ -173,7 +210,7 @@ export default function ArchMindCanvas({
     }
 
     if (onChange) {
-      onChange(elements, appState, files);
+      onChange(currentElements, appState, files);
     }
   }, [autoSave, onChange]);
 
@@ -195,7 +232,7 @@ export default function ArchMindCanvas({
         UIOptions={{
           welcomeScreen: true,
         }}
-        excalidrawAPI={onAPI}
+        excalidrawAPI={handleAPI}
         onChange={handleChange}
       >
         {/* Custom Main Menu Configuration */}

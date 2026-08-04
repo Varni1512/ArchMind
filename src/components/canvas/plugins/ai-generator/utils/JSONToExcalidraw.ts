@@ -70,13 +70,20 @@ export function convertJSONToExcalidraw(architecture: AIGeneratedArchitecture) {
       const textY = y + (height - textHeight) / 2;
       
       const groupId = Math.random().toString(36).substring(2, 15);
+      const textId = Math.random().toString(36).substring(2, 15);
+      
       container.groupIds = [groupId];
+      container.boundElements = [{ type: 'text', id: textId }];
 
       const textElement = createText(textX, textY, combinedText, { 
+        id: textId,
         strokeColor: '#111827',
         width: textWidth,
         height: textHeight,
         textAlign: 'center',
+        verticalAlign: 'middle',
+        containerId: container.id,
+        autoResize: true,
         groupIds: [groupId]
       });
 

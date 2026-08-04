@@ -1,4 +1,13 @@
-import { generateId, createRectangle, createText, createLine, createEllipse, createDiamond } from '../utils/elementGenerator';
+import { 
+  generateId, 
+  createRectangle, 
+  createText, 
+  createContainerWithBoundText, 
+  createLine, 
+  createEllipse, 
+  createDiamond,
+  estimateTextDimensions
+} from '../utils/elementGenerator';
 
 // --- CLASS DIAGRAM ---
 
@@ -16,60 +25,106 @@ export function generateClassNode(
   const hasAttributes = attributes && attributes.length > 0;
   const hasMethods = methods && methods.length > 0;
 
-  const maxTextLength = Math.max(
-    name.length + (stereotype ? stereotype.length + 4 : 0),
-    hasAttributes ? Math.max(...attributes.map(a => a.length)) : 0,
-    hasMethods ? Math.max(...methods.map(m => m.length)) : 0
-  );
-  const width = Math.max(200, maxTextLength * 8 + 40);
+  const headerTitle = stereotype ? `<<${stereotype}>>\n${name}` : name;
+  const attrContent = hasAttributes ? attributes.join("\n") : "";
+  const methodContent = hasMethods ? methods.join("\n") : (stereotype ? "" : "+ method(): returnType");
 
-  const headerHeight = stereotype ? 60 : 40;
-  const attrHeight = hasAttributes ? Math.max(40, attributes.length * 24 + 16) : 0;
-  const methodHeight = hasMethods ? Math.max(40, methods.length * 24 + 16) : 0;
+  const estHeader = estimateTextDimensions(headerTitle, 16);
+  const estAttr = attrContent ? estimateTextDimensions(attrContent, 14) : { width: 0, height: 0, lineCount: 0 };
+  const estMethod = methodContent ? estimateTextDimensions(methodContent, 14) : { width: 0, height: 0, lineCount: 0 };
 
-  const titleText = stereotype ? `<<${stereotype}>>\n${name}` : name;
+  const minWidth = Math.max(200, estHeader.width + 32, estAttr.width + 32, estMethod.width + 32);
+  const width = minWidth;
 
-  const elements = [];
+  const headerHeight = Math.max(stereotype ? 56 : 38, estHeader.height + 16);
+  const attrHeight = attrContent ? Math.max(38, estAttr.height + 16) : 0;
+  const methodHeight = methodContent ? Math.max(38, estMethod.height + 16) : 0;
+
+  const totalHeight = headerHeight + attrHeight + methodHeight;
+
   const customData = { diagramType: 'Class Diagram', nodeType: stereotype || 'Class' };
 
-  // Header
-  elements.push(createRectangle(x, y, width, headerHeight, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + headerHeight / 2, titleText, {
+  // 1. Unified Card Container (4 Rounded Outer Borders!)
+  const card = createRectangle(x, y, width, totalHeight, {
     groupIds: [groupId],
-    fontSize: 16,
-    fontFamily: 1, 
-    strokeWidth: isAbstract ? 1 : 2,
-    textAlign: "center"
-  }));
+    backgroundColor: "#ffffff",
+    strokeColor: "#1e293b",
+    strokeWidth: isAbstract ? 1.5 : 2,
+    roundness: { type: 2 }, // 4 rounded outer borders
+    boundElements: [],
+    customData,
+  });
+
+  const elements: any[] = [card];
+
+  // 2. Header Text (centered in top section)
+  const headerText = createText(
+    Math.round(x + (width - estHeader.width) / 2),
+    Math.round(y + (headerHeight - estHeader.height) / 2),
+    headerTitle,
+    {
+      groupIds: [groupId],
+      fontSize: 16,
+      textAlign: "center",
+      verticalAlign: "middle",
+      containerId: null,
+      customData: { role: 'header' },
+    }
+  );
+  elements.push(headerText);
 
   let currentY = y + headerHeight;
 
-  // Attributes Rectangle
-  if (hasAttributes) {
-    const attributesText = attributes.join("\n");
-    elements.push(createRectangle(x, currentY, width, attrHeight, { groupIds: [groupId] }));
-    elements.push(createText(x + 10, currentY + attrHeight / 2, attributesText, {
+  // 3. Attributes Divider Line & Text
+  if (attrContent) {
+    const line1 = createLine(x, currentY, width, 0, {
       groupIds: [groupId],
-      fontSize: 14,
-      fontFamily: 1,
-      textAlign: "left",
-    }));
+      strokeColor: "#1e293b",
+      strokeWidth: 1.5,
+    });
+    elements.push(line1);
+
+    const attrText = createText(
+      Math.round(x + 12),
+      Math.round(currentY + (attrHeight - estAttr.height) / 2),
+      attrContent,
+      {
+        groupIds: [groupId],
+        fontSize: 14,
+        textAlign: "left",
+        verticalAlign: "middle",
+        containerId: null,
+        customData: { role: 'attributes' },
+      }
+    );
+    elements.push(attrText);
+
     currentY += attrHeight;
   }
 
-  // Methods Rectangle
-  if (hasMethods || (!hasAttributes && !hasMethods)) { 
-    // Always render at least a methods block if it's completely empty just to have a box, 
-    // or if it has methods.
-    const methodsText = methods.join("\n") || " ";
-    const actualMethodHeight = hasMethods ? methodHeight : 40;
-    elements.push(createRectangle(x, currentY, width, actualMethodHeight, { groupIds: [groupId] }));
-    elements.push(createText(x + 10, currentY + actualMethodHeight / 2, methodsText, {
+  // 4. Methods Divider Line & Text
+  if (methodContent) {
+    const line2 = createLine(x, currentY, width, 0, {
       groupIds: [groupId],
-      fontSize: 14,
-      fontFamily: 1,
-      textAlign: "left",
-    }));
+      strokeColor: "#1e293b",
+      strokeWidth: 1.5,
+    });
+    elements.push(line2);
+
+    const methodText = createText(
+      Math.round(x + 12),
+      Math.round(currentY + (methodHeight - estMethod.height) / 2),
+      methodContent,
+      {
+        groupIds: [groupId],
+        fontSize: 14,
+        textAlign: "left",
+        verticalAlign: "middle",
+        containerId: null,
+        customData: { role: 'methods' },
+      }
+    );
+    elements.push(methodText);
   }
 
   return elements;
@@ -79,39 +134,68 @@ export function generateInterfaceNode(x: number, y: number, name: string = "Inte
   return generateClassNode(x, y, name, [], methods, "interface");
 }
 
-export function generateAbstractClassNode(x: number, y: number, name: string = "AbstractClass", attributes: string[] = [], methods: string[] = ["+ abstractMethod(): void", "+ method(): returnType"]) {
+export function generateAbstractClassNode(x: number, y: number, name: string = "AbstractClass", attributes: string[] = ["+ attribute: type"], methods: string[] = ["+ abstractMethod(): void", "+ method(): returnType"]) {
   return generateClassNode(x, y, name, attributes, methods, "abstract", true);
 }
 
 export function generateEnumNode(x: number, y: number) {
   const groupId = generateId();
-  const width = 160;
-  const headerHeight = 60;
+  const width = 180;
+  const headerHeight = 56;
   const bodyHeight = 80;
+  const totalHeight = headerHeight + bodyHeight;
 
-  const elements = [];
   const customData = { diagramType: 'Class Diagram', nodeType: 'Enum' };
 
-  // Header Rectangle
-  elements.push(createRectangle(x, y, width, headerHeight, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + headerHeight / 2, "<<enum>>\nEnumName", {
+  // 1. Unified Card Container (4 Rounded Outer Borders!)
+  const card = createRectangle(x, y, width, totalHeight, {
     groupIds: [groupId],
-    fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    backgroundColor: "#ffffff",
+    strokeColor: "#1e293b",
+    strokeWidth: 2,
+    roundness: { type: 2 },
+    boundElements: [],
+    customData,
+  });
 
-  // Body Rectangle
-  const bodyY = y + headerHeight;
-  elements.push(createRectangle(x, bodyY, width, bodyHeight, { groupIds: [groupId] }));
-  elements.push(createText(x + 10, bodyY + bodyHeight / 2, "VALUE_1\nVALUE_2\nVALUE_3", {
+  // 2. Header Text
+  const headerText = createText(
+    Math.round(x + 20),
+    Math.round(y + 12),
+    "<<enum>>\nEnumName",
+    {
+      groupIds: [groupId],
+      fontSize: 16,
+      textAlign: "center",
+      verticalAlign: "middle",
+      containerId: null,
+      customData: { role: 'header' },
+    }
+  );
+
+  // 3. Divider Line
+  const divider = createLine(x, y + headerHeight, width, 0, {
     groupIds: [groupId],
-    fontSize: 14,
-    fontFamily: 1,
-    textAlign: "left",
-  }));
+    strokeColor: "#1e293b",
+    strokeWidth: 1.5,
+  });
 
-  return elements;
+  // 4. Body Values Text
+  const bodyText = createText(
+    Math.round(x + 12),
+    Math.round(y + headerHeight + 12),
+    "VALUE_1\nVALUE_2\nVALUE_3",
+    {
+      groupIds: [groupId],
+      fontSize: 14,
+      textAlign: "left",
+      verticalAlign: "middle",
+      containerId: null,
+      customData: { role: 'values' },
+    }
+  );
+
+  return [card, headerText, divider, bodyText];
 }
 
 export function generatePackageNode(x: number, y: number) {
@@ -126,38 +210,37 @@ export function generatePackageNode(x: number, y: number) {
   const customData = { diagramType: 'Package Diagram', nodeType: 'Package' };
 
   elements.push(createRectangle(x, y, tabWidth, tabHeight, { groupIds: [groupId], customData }));
-  elements.push(createRectangle(x, y + tabHeight, bodyWidth, bodyHeight, { groupIds: [groupId] }));
   
-  elements.push(createText(x + bodyWidth / 2, y + tabHeight + bodyHeight / 2, "PackageName", {
+  const body = createContainerWithBoundText('rectangle', x, y + tabHeight, bodyWidth, bodyHeight, "PackageName", {
     groupIds: [groupId],
     fontSize: 16,
-    fontFamily: 1,
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(body.container, body.textElement);
 
   return elements;
 }
 
 export function generateNoteNode(x: number, y: number, text: string = "This is\na note...") {
   const groupId = generateId();
-  const width = Math.max(160, Math.max(...text.split('\n').map(l => l.length)) * 10);
-  const height = Math.max(100, text.split('\n').length * 20 + 40);
+  const lines = text.split('\n');
+  const width = Math.max(160, Math.max(...lines.map(l => l.length)) * 10);
+  const height = Math.max(100, lines.length * 24 + 40);
   const elements = [];
   
   const customData = { diagramType: 'Generic', nodeType: 'Note' };
 
-  elements.push(createRectangle(x, y, width, height, { 
+  const note = createContainerWithBoundText('rectangle', x, y, width, height, text, {
     groupIds: [groupId],
-    backgroundColor: "#fef08a", // yellow note
-    fillStyle: "solid",
-    roughness: 1, // Make it look a bit like paper
-    customData
-  }));
-
-  elements.push(createText(x + width / 2, y + height / 2, text, {
-    groupIds: [groupId],
+    backgroundColor: "#fef08a",
+    roughness: 1,
+    customData,
     fontSize: 16,
-    fontFamily: 1, // Virgil
-  }));
+    textAlign: "left",
+    verticalAlign: "top",
+  });
+  elements.push(note.container, note.textElement);
 
   return elements;
 }
@@ -166,33 +249,63 @@ export function generateNoteNode(x: number, y: number, text: string = "This is\n
 
 export function generateObjectNode(x: number, y: number, name: string = "object1 : ClassName", attributes: string[] = ["attribute1 = value1", "attribute2 = value2"]) {
   const groupId = generateId();
-  
-  const maxTextLength = Math.max(name.length, ...attributes.map(a => a.length));
-  const width = Math.max(160, maxTextLength * 8 + 40);
-  const headerHeight = 40;
-  const attrHeight = Math.max(40, attributes.length * 24 + 16);
+  const attrContent = attributes.join("\n") || " ";
+  const estHeader = estimateTextDimensions(name, 16);
+  const estAttr = estimateTextDimensions(attrContent, 14);
 
-  const elements = [];
+  const width = Math.max(180, estHeader.width + 32, estAttr.width + 32);
+  const headerHeight = 38;
+  const attrHeight = Math.max(38, estAttr.height + 16);
+  const totalHeight = headerHeight + attrHeight;
+
   const customData = { diagramType: 'Object Diagram', nodeType: 'Object' };
 
-  elements.push(createRectangle(x, y, width, headerHeight, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + headerHeight / 2, name, {
+  // 1. Unified Card Container (4 Rounded Outer Borders!)
+  const card = createRectangle(x, y, width, totalHeight, {
     groupIds: [groupId],
-    fontSize: 16,
-    fontFamily: 1, 
-    textAlign: "center"
-  }));
+    backgroundColor: "#ffffff",
+    strokeColor: "#1e293b",
+    strokeWidth: 2,
+    roundness: { type: 2 },
+    boundElements: [],
+    customData,
+  });
 
-  const attrY = y + headerHeight;
-  elements.push(createRectangle(x, attrY, width, attrHeight, { groupIds: [groupId] }));
-  elements.push(createText(x + 10, attrY + attrHeight / 2, attributes.join("\n") || " ", {
+  const headerText = createText(
+    Math.round(x + (width - estHeader.width) / 2),
+    Math.round(y + (headerHeight - estHeader.height) / 2),
+    name,
+    {
+      groupIds: [groupId],
+      fontSize: 16,
+      textAlign: "center",
+      verticalAlign: "middle",
+      containerId: null,
+      customData: { role: 'header' },
+    }
+  );
+
+  const divider = createLine(x, y + headerHeight, width, 0, {
     groupIds: [groupId],
-    fontSize: 14,
-    fontFamily: 1,
-    textAlign: "left",
-  }));
+    strokeColor: "#1e293b",
+    strokeWidth: 1.5,
+  });
 
-  return elements;
+  const bodyText = createText(
+    Math.round(x + 12),
+    Math.round(y + headerHeight + 8),
+    attrContent,
+    {
+      groupIds: [groupId],
+      fontSize: 14,
+      textAlign: "left",
+      verticalAlign: "middle",
+      containerId: null,
+      customData: { role: 'attributes' },
+    }
+  );
+
+  return [card, headerText, divider, bodyText];
 }
 
 // --- SEQUENCE & USE CASE DIAGRAM ---
@@ -244,13 +357,14 @@ export function generateLifelineNode(x: number, y: number) {
   const lineLength = 300;
   const customData = { diagramType: 'Sequence Diagram', nodeType: 'Lifeline' };
 
-  elements.push(createRectangle(x, y, width, height, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + height / 2, ":Boundary", {
+  const head = createContainerWithBoundText('rectangle', x, y, width, height, ":Boundary", {
     groupIds: [groupId],
+    customData,
     fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(head.container, head.textElement);
 
   // Dashed line down
   elements.push(createLine(x + width / 2, y + height, 0, lineLength, { 
@@ -294,13 +408,11 @@ export function generateFinalNode(x: number, y: number) {
   const customData = { diagramType: 'Activity/State Diagram', nodeType: 'FinalNode' };
 
   const elements = [];
-  // Outer circle
   elements.push(createEllipse(x, y, outerSize, outerSize, { groupIds: [groupId], customData }));
-  // Inner filled circle
   const offset = (outerSize - innerSize) / 2;
   elements.push(createEllipse(x + offset, y + offset, innerSize, innerSize, { 
-    groupIds: [groupId],
-    backgroundColor: "#000000",
+    groupIds: [groupId], 
+    backgroundColor: "#000000", 
     fillStyle: "solid" 
   }));
 
@@ -314,17 +426,15 @@ export function generateActionNode(x: number, y: number, name: string = "Action"
   const customData = { diagramType: 'Activity/State Diagram', nodeType: 'Action/State' };
 
   const elements = [];
-  elements.push(createRectangle(x, y, width, height, { 
-    groupIds: [groupId], 
-    roundness: { type: 3 }, // Rounded rectangle
-    customData 
-  }));
-  elements.push(createText(x + width / 2, y + height / 2, name, {
+  const action = createContainerWithBoundText('rectangle', x, y, width, height, name, {
     groupIds: [groupId],
+    roundness: { type: 3 },
+    customData,
     fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(action.container, action.textElement);
 
   return elements;
 }
@@ -336,13 +446,14 @@ export function generateDecisionNode(x: number, y: number, label: string = "Deci
   const customData = { diagramType: 'Activity Diagram', nodeType: 'Decision' };
 
   const elements = [];
-  elements.push(createDiamond(x, y, width, height, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + height / 2 + 30, label, {
+  const decision = createContainerWithBoundText('diamond', x, y, width, height, label, {
     groupIds: [groupId],
+    customData,
     fontSize: 14,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(decision.container, decision.textElement);
 
   return elements;
 }
@@ -362,15 +473,15 @@ export function generateForkNode(x: number, y: number) {
   const customData = { diagramType: 'Activity Diagram', nodeType: 'Fork/Join' };
 
   return [createRectangle(x, y, width, height, { 
-    groupIds: [groupId],
-    backgroundColor: "#000000",
+    groupIds: [groupId], 
+    backgroundColor: "#000000", 
     fillStyle: "solid",
-    customData
+    customData 
   })];
 }
 
 export function generateJoinNode(x: number, y: number) {
-  return generateForkNode(x, y); // Fork and Join are the same visual shape
+  return generateForkNode(x, y);
 }
 
 // --- USE CASE DIAGRAM ---
@@ -382,13 +493,14 @@ export function generateUseCaseNode(x: number, y: number, name: string = "Use Ca
   const customData = { diagramType: 'Use Case Diagram', nodeType: 'UseCase' };
 
   const elements = [];
-  elements.push(createEllipse(x, y, width, height, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + height / 2, name, {
+  const uc = createContainerWithBoundText('ellipse', x, y, width, height, name, {
     groupIds: [groupId],
+    customData,
     fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(uc.container, uc.textElement);
 
   return elements;
 }
@@ -403,16 +515,15 @@ export function generateComponentNode(x: number, y: number, name: string = "Comp
   
   const elements = [];
   
-  // Main body
-  elements.push(createRectangle(x, y, width, height, { groupIds: [groupId], customData }));
-  
-  // Stereotype & Name
-  elements.push(createText(x + width / 2, y + height / 2, `<<component>>\n${name}`, {
+  // Main body + Bound Text
+  const main = createContainerWithBoundText('rectangle', x, y, width, height, `<<component>>\n${name}`, {
     groupIds: [groupId],
+    customData,
     fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(main.container, main.textElement);
   
   // 2 small rectangles on the left border
   const boxWidth = 20;
@@ -435,29 +546,26 @@ export function generateDeviceNode(x: number, y: number, name: string = "Device"
   
   const elements = [];
   
-  // Front face
-  elements.push(createRectangle(x, y, width, height, { groupIds: [groupId], customData }));
+  // Front face + Bound Text
+  const front = createContainerWithBoundText('rectangle', x, y, width, height, `<<device>>\n${name}`, {
+    groupIds: [groupId],
+    customData,
+    fontSize: 16,
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(front.container, front.textElement);
   
   // Depth offset for 3D effect
   const dx = 20;
   const dy = -20;
   
-  // Top face lines
-  elements.push(createLine(x, y, dx, dy, { groupIds: [groupId] })); // Top-Left to Back-Top-Left
-  elements.push(createLine(x + dx, y + dy, width, 0, { groupIds: [groupId] })); // Back-Top-Left to Back-Top-Right
-  elements.push(createLine(x + width, y, dx, dy, { groupIds: [groupId] })); // Top-Right to Back-Top-Right
-  
-  // Right face lines
-  elements.push(createLine(x + width + dx, y + dy, 0, height, { groupIds: [groupId] })); // Back-Top-Right to Back-Bottom-Right
-  elements.push(createLine(x + width, y + height, dx, dy, { groupIds: [groupId] })); // Bottom-Right to Back-Bottom-Right
-
-  // Text
-  elements.push(createText(x + width / 2, y + 30, `<<device>>\n${name}`, {
-    groupIds: [groupId],
-    fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+  // 3D Perspective lines
+  elements.push(createLine(x, y, dx, dy, { groupIds: [groupId] }));
+  elements.push(createLine(x + dx, y + dy, width, 0, { groupIds: [groupId] }));
+  elements.push(createLine(x + width, y, dx, dy, { groupIds: [groupId] }));
+  elements.push(createLine(x + width + dx, y + dy, 0, height, { groupIds: [groupId] }));
+  elements.push(createLine(x + width, y + height, dx, dy, { groupIds: [groupId] }));
 
   return elements;
 }
@@ -469,13 +577,14 @@ export function generateArtifactNode(x: number, y: number, name: string = "Artif
   const customData = { diagramType: 'Deployment Diagram', nodeType: 'Artifact' };
 
   const elements = [];
-  elements.push(createRectangle(x, y, width, height, { groupIds: [groupId], customData }));
-  elements.push(createText(x + width / 2, y + height / 2, `<<artifact>>\n${name}`, {
+  const artifact = createContainerWithBoundText('rectangle', x, y, width, height, `<<artifact>>\n${name}`, {
     groupIds: [groupId],
+    customData,
     fontSize: 16,
-    fontFamily: 1,
-    textAlign: "center"
-  }));
+    textAlign: "center",
+    verticalAlign: "middle",
+  });
+  elements.push(artifact.container, artifact.textElement);
 
   return elements;
 }

@@ -1,4 +1,5 @@
 import { generateNKeysBetween } from 'fractional-indexing';
+import { reconcileCanvasElements } from './elementReconciliation';
 
 /**
  * Assigns clean, monotonically increasing fractional indices to all elements.
@@ -35,7 +36,7 @@ export function normalizeFractionalIndices<T extends Record<string, any>>(
 
 /**
  * Strips corrupted/duplicate indices before restoring with Excalidraw's restoreElements,
- * then enforces normalized fractional indices.
+ * then enforces normalized fractional indices and composite element reconciliation.
  */
 export async function safeRestoreElements(
   elements: readonly any[],
@@ -56,16 +57,18 @@ export async function safeRestoreElements(
     });
 
     const restored = restoreElements(stripped, localElements, { repairBindings: true });
-    return normalizeFractionalIndices(restored);
+    const { elements: reconciled } = reconcileCanvasElements(restored);
+    return normalizeFractionalIndices(reconciled);
   } catch (err) {
     console.warn('[ArchMind] Safe restore fallback used:', err);
-    return normalizeFractionalIndices(elements);
+    const { elements: reconciled } = reconcileCanvasElements(elements);
+    return normalizeFractionalIndices(reconciled);
   }
 }
 
 /**
  * Merges current canvas elements with newly created elements (e.g. from toolbar / AI)
- * ensuring all elements have distinct and valid sequential fractional indices.
+ * ensuring all elements have distinct and valid sequential fractional indices and reconciled geometry.
  */
 export async function safeMergeElements(
   currentElements: readonly any[],
@@ -90,10 +93,12 @@ export async function safeMergeElements(
     });
 
     const restored = restoreElements(combined, null, { repairBindings: true });
-    return normalizeFractionalIndices(restored);
+    const { elements: reconciled } = reconcileCanvasElements(restored);
+    return normalizeFractionalIndices(reconciled);
   } catch (err) {
     console.warn('[ArchMind] Safe merge fallback used:', err);
     const combined = [...currentList, ...newList];
-    return normalizeFractionalIndices(combined);
+    const { elements: reconciled } = reconcileCanvasElements(combined);
+    return normalizeFractionalIndices(reconciled);
   }
 }

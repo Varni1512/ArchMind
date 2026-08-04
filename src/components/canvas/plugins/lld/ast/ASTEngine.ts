@@ -31,7 +31,10 @@ export class ASTEngine {
           const dataElement = groupElements.find(e => e.customData?.nodeType);
           
           if (dataElement || groupElements.some(e => e.type === 'text')) {
-            const texts = groupElements.filter(e => e.type === 'text').map(e => e.text);
+            const textElements = groupElements
+              .filter(e => e.type === 'text')
+              .sort((a, b) => a.y - b.y);
+            const texts = textElements.map(e => e.text || e.originalText || '');
             
             let name = "Unknown";
             let stereotype = "";
