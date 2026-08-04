@@ -28,6 +28,7 @@ const TOOL_CATEGORIES = [
 export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
   const { activeDiagramType } = useHLDWorkspace();
   const [activeNodeTool, setActiveNodeTool] = useState<string | null>(null);
+  const [activeEdgeTool, setActiveEdgeTool] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -83,6 +84,12 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
     
     if (isEdge) {
       setActiveNodeTool(null);
+      if (activeEdgeTool === toolId) {
+        setActiveEdgeTool(null);
+        excalidrawAPI.updateScene({ appState: { activeTool: { type: 'selection' } } });
+        return;
+      }
+      setActiveEdgeTool(toolId);
       let updateState: any = { activeTool: { type: 'arrow' }, currentItemStrokeStyle: "solid", currentItemStartArrowhead: null, currentItemEndArrowhead: "arrow" };
       
       switch (toolId) {
@@ -107,8 +114,10 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
       }
       excalidrawAPI.updateScene({ appState: updateState });
     } else {
-      setActiveNodeTool(activeNodeTool === toolId ? null : toolId);
-      if (activeNodeTool !== toolId) {
+      setActiveEdgeTool(null);
+      const nextTool = activeNodeTool === toolId ? null : toolId;
+      setActiveNodeTool(nextTool);
+      if (nextTool) {
         excalidrawAPI.updateScene({ appState: { activeTool: { type: 'selection' } } });
       }
       setOpenCategory(null);
@@ -239,11 +248,11 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
   }, [searchQuery, tools.nodes]);
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[95vw] bg-white/90 backdrop-blur-md border border-primary/10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-2.5 flex flex-col items-center gap-2 z-10 transition-all">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[95vw] bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-2.5 flex flex-col items-center gap-2 z-10 transition-all">
       
       {/* Top Row: Search Field */}
       <div className="relative flex-shrink-0 w-full flex justify-center">
-        <div className={`flex items-center bg-gray-50/80 border border-gray-200/80 rounded-xl transition-all duration-300 overflow-hidden w-64 pl-3 pr-2 py-1.5 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-300`}>
+        <div className="flex items-center bg-gray-50/80 border border-gray-200/80 rounded-xl transition-all duration-300 overflow-hidden w-64 pl-3 pr-2 py-1.5 focus-within:ring-2 focus-within:ring-[#6965db]/20 focus-within:border-[#6965db]">
           <Search size={16} className="text-gray-500 shrink-0 mr-2" />
           <input
             ref={searchInputRef}
@@ -262,7 +271,7 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
 
         {/* Global Search Results Dropdown - Spawns ABOVE toolbar */}
         {searchQuery && searchResults && searchResults.length > 0 && openCategory === 'search' && (
-          <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm border border-primary/10 rounded-xl shadow-xl p-3 w-[320px] max-h-[400px] overflow-y-auto z-50">
+          <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm border border-gray-200/80 rounded-xl shadow-xl p-3 w-[320px] max-h-[400px] overflow-y-auto z-50">
             {searchResults.map(category => (
               <div key={category.id} className="mb-4 last:mb-0">
                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -273,15 +282,15 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
                     <button
                       key={tool.id}
                       onClick={() => handleToolClick(tool.id, false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 cursor-pointer text-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-pointer text-sm text-left focus:outline-none ${
                         activeNodeTool === tool.id 
-                          ? "bg-purple-50 border border-purple-200 text-purple-800 font-semibold shadow-md scale-[1.02]" 
-                          : "text-gray-700 border border-transparent hover:bg-white hover:shadow-md hover:border-gray-200 hover:-translate-y-0.5"
+                          ? "bg-[#ececfc] text-black font-semibold [&_svg]:stroke-[2.4px]" 
+                          : "text-[#5f6368] hover:bg-[#f1f0ff] hover:text-gray-900 [&_svg]:stroke-[1.8px]"
                       }`}
                       aria-label={`Select ${tool.label}`}
                       tabIndex={0}
                     >
-                      <span className="text-gray-500">{renderIcon(tool.id)}</span>
+                      <span className={activeNodeTool === tool.id ? "text-black" : "text-[#5f6368]"}>{renderIcon(tool.id)}</span>
                       {tool.label}
                     </button>
                   ))}
@@ -297,7 +306,7 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
         
         {/* Categorized Nodes */}
         {tools.nodes.length > 0 && (
-          <div className={`grid grid-cols-2 sm:grid-cols-4 gap-1 items-center ${tools.edges.length > 0 ? 'sm:border-r sm:border-gray-200/60 sm:pr-2' : ''}`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-4 gap-1 items-center ${tools.edges.length > 0 ? 'sm:border-r sm:border-gray-200/80 sm:pr-2' : ''}`}>
             {TOOL_CATEGORIES.map(category => {
               const categoryTools = tools.nodes.filter(t => category.tools.includes(t.id));
               if (categoryTools.length === 0) return null;
@@ -312,22 +321,22 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
                   onMouseLeave={handleMouseLeave}
                 >
                   <button 
-                    className={`px-3 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 cursor-pointer text-sm font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                    className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer text-sm font-medium whitespace-nowrap focus:outline-none ${
                       isActive || (openCategory === category.id && !searchQuery)
-                        ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-100" 
-                        : "text-gray-600 border border-transparent hover:bg-white hover:shadow-md hover:text-gray-900 hover:-translate-y-0.5"
+                        ? "bg-[#ececfc] text-black font-semibold [&_svg]:stroke-[2.4px]" 
+                        : "text-[#5f6368] hover:bg-[#f1f0ff] hover:text-gray-900 [&_svg]:stroke-[1.8px]"
                     }`}
                     aria-haspopup="true"
                     aria-expanded={openCategory === category.id}
                     aria-label={`${category.label} Category`}
                   >
-                    <span className={`${isActive || (openCategory === category.id && !searchQuery) ? "text-purple-600" : "text-gray-400 group-hover:text-gray-600"} transition-colors`}>{category.icon}</span>
+                    <span className={`${isActive || (openCategory === category.id && !searchQuery) ? "text-black" : "text-[#5f6368] group-hover:text-gray-800"} transition-colors`}>{category.icon}</span>
                     <span className="hidden md:inline">{category.label}</span>
                   </button>
 
                   {/* Dropdown Menu - Spawns ABOVE toolbar */}
                   {openCategory === category.id && !searchQuery && (
-                    <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm border border-primary/10 rounded-xl shadow-xl p-3 w-max min-w-[280px] z-50 transform origin-bottom animate-in zoom-in-95 duration-100">
+                    <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm border border-gray-200/80 rounded-xl shadow-xl p-3 w-max min-w-[280px] z-50 transform origin-bottom animate-in zoom-in-95 duration-100">
                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5 px-2">
                         {category.icon} {category.label}
                       </div>
@@ -336,15 +345,15 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
                           <button
                             key={tool.id}
                             onClick={() => handleToolClick(tool.id, false)}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 cursor-pointer text-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-pointer text-sm text-left focus:outline-none ${
                               activeNodeTool === tool.id 
-                                ? "bg-purple-50 border border-purple-200 text-purple-800 font-semibold shadow-md scale-[1.02]" 
-                                : "text-gray-700 border border-transparent hover:bg-white hover:shadow-md hover:border-gray-200 hover:-translate-y-0.5"
+                                ? "bg-[#ececfc] text-black font-semibold [&_svg]:stroke-[2.4px]" 
+                                : "text-[#5f6368] hover:bg-[#f1f0ff] hover:text-gray-900 [&_svg]:stroke-[1.8px]"
                             }`}
                             aria-label={`Select ${tool.label}`}
                             tabIndex={0}
                           >
-                            <span className={activeNodeTool === tool.id ? "text-purple-600" : "text-gray-400"}>{renderIcon(tool.id)}</span>
+                            <span className={activeNodeTool === tool.id ? "text-black" : "text-[#5f6368]"}>{renderIcon(tool.id)}</span>
                             {tool.label}
                           </button>
                         ))}
@@ -365,7 +374,7 @@ export function HLDToolbarPlugin({ excalidrawAPI }: Props) {
                 key={tool.id} 
                 icon={renderIcon(tool.id)} 
                 tooltip={tool.label} 
-                isActive={false}
+                isActive={activeEdgeTool === tool.id}
                 onClick={() => handleToolClick(tool.id, true)} 
               />
             ))}
@@ -385,17 +394,17 @@ function ToolbarButton({ icon, tooltip, isActive, onClick }: { icon: React.React
         e.stopPropagation();
         onClick();
       }}
-      className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 group relative cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+      className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center transition-colors group relative cursor-pointer focus:outline-none ${
         isActive 
-          ? "bg-purple-50 text-purple-700 shadow-md scale-[1.02] border border-purple-200" 
-          : "text-gray-500 border border-transparent hover:bg-white hover:shadow-md hover:text-gray-900 hover:-translate-y-0.5"
+          ? "bg-[#ececfc] text-black font-bold [&_svg]:stroke-[2.4px]" 
+          : "text-[#5f6368] hover:bg-[#f1f0ff] hover:text-gray-900 [&_svg]:stroke-[1.8px]"
       }`}
       aria-label={tooltip}
       title={tooltip}
       tabIndex={0}
     >
       {icon}
-      <span className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+      <span className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-gray-900 text-white text-[11px] font-medium rounded-md shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
         {tooltip}
       </span>
     </button>

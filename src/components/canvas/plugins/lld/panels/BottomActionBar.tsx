@@ -15,13 +15,13 @@ export function BottomActionBar({ excalidrawAPI }: Props) {
 
   return (
     <>
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-surface border border-primary/10 rounded-full shadow-lg px-2 py-2 flex items-center gap-2 z-20">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] px-2 py-1.5 flex items-center gap-2 z-20">
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-primary/5 transition-colors group text-blue-600 hover:text-blue-700 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-full hover:bg-[#f1f0ff] transition-colors group text-indigo-600 hover:text-indigo-700 cursor-pointer text-sm font-medium"
         >
           <Code size={18} />
-          <span className="text-sm font-medium">Generate Code</span>
+          <span>Generate Code</span>
         </button>
       </div>
 

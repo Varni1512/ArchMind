@@ -34,6 +34,49 @@ const MAX_HISTORY_ITEMS = 50;
 export class AIGeneratorHistoryManager {
   private static HISTORY_KEY = STORAGE_KEYS.AI_HISTORY;
   private static SESSION_KEY = STORAGE_KEYS.AI_SESSION;
+  public static ONE_DAY_MS = 24 * 60 * 60 * 1000; // 24 hours (1 day)
+
+  /**
+   * Checks if the active working session is older than 24 hours (1 day).
+   * If expired:
+   *   1. Automatically archives the session into History (if not already present).
+   *   2. Clears the active session so the user starts with a clean/blank canvas.
+   * Returns true if session was expired and cleared, false otherwise.
+   */
+  static checkAndArchiveExpiredSession(): boolean {
+    const session = this.loadSession();
+    if (!session) return false;
+
+    const age = Date.now() - (session.timestamp || 0);
+    if (age > this.ONE_DAY_MS) {
+      const hasContent = (session.prompt && session.prompt.trim().length > 0) || 
+                         (Array.isArray(session.elements) && session.elements.some((el: any) => el && !el.isDeleted));
+      
+      if (hasContent) {
+        const history = this.getHistory();
+        const alreadyInHistory = history.some(
+          item => item.prompt === session.prompt && item.elements?.length === session.elements?.length
+        );
+
+        if (!alreadyInHistory) {
+          this.addHistory({
+            prompt: session.prompt || 'Previous System Architecture',
+            complexity: session.complexity || 'Intermediate',
+            cloudProvider: session.cloudProvider || 'Generic',
+            elements: session.elements || [],
+            appState: session.appState,
+            explanation: session.explanationData || undefined,
+            title: session.prompt ? undefined : 'Archived Architecture',
+          });
+        }
+      }
+
+      this.clearSession();
+      return true;
+    }
+
+    return false;
+  }
 
   /**
    * Derive a clean, human-readable title from prompt

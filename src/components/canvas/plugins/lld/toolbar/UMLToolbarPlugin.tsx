@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLLDWorkspace } from '../context/LLDWorkspaceContext';
 import { DIAGRAM_TOOLS_MAP } from './DiagramTools';
 import { 
-  Square, Box, Type, List, Layout, FileText, ArrowRight, CornerDownRight, 
+  Square, Box, List, Layout, FileText, ArrowRight, CornerDownRight, 
   Focus, Link, GitMerge, MoveRight, User, Play, StopCircle, 
   Circle, HelpCircle, ArrowLeftRight, Navigation
 } from 'lucide-react';
@@ -27,6 +27,7 @@ interface Props {
 export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
   const { activeDiagramType } = useLLDWorkspace();
   const [activeNodeTool, setActiveNodeTool] = useState<string | null>(null);
+  const [activeEdgeTool, setActiveEdgeTool] = useState<string | null>(null);
 
   const tools = DIAGRAM_TOOLS_MAP[activeDiagramType] || { nodes: [], edges: [] };
 
@@ -97,6 +98,12 @@ export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
     
     if (isEdge) {
       setActiveNodeTool(null);
+      if (activeEdgeTool === toolId) {
+        setActiveEdgeTool(null);
+        excalidrawAPI.updateScene({ appState: { activeTool: { type: 'selection' } } });
+        return;
+      }
+      setActiveEdgeTool(toolId);
       let updateState: any = { activeTool: { type: 'arrow' }, currentItemStrokeStyle: "solid", currentItemStartArrowhead: null, currentItemEndArrowhead: "arrow" };
       
       switch (toolId) {
@@ -136,15 +143,25 @@ export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
       
       excalidrawAPI.updateScene({ appState: updateState });
     } else {
-      setActiveNodeTool(activeNodeTool === toolId ? null : toolId);
+      setActiveEdgeTool(null);
+      const nextTool = activeNodeTool === toolId ? null : toolId;
+      setActiveNodeTool(nextTool);
       excalidrawAPI.updateScene({ appState: { activeTool: { type: 'selection' } } });
     }
   };
 
+  const InterfaceIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="7" y1="4" x2="17" y2="4" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+      <line x1="7" y1="20" x2="17" y2="20" />
+    </svg>
+  );
+
   const getIcon = (id: string) => {
     switch (id) {
       case 'Class': return <Square size={18} />;
-      case 'Interface': return <Type size={18} />;
+      case 'Interface': return <InterfaceIcon />;
       case 'AbstractClass': return <Box size={18} />;
       case 'Enum': return <List size={18} />;
       case 'Package': return <Layout size={18} />;
@@ -188,11 +205,11 @@ export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
   };
 
   return (
-    <div className="absolute top-[72px] left-1/2 -translate-x-1/2 bg-surface border border-primary/10 rounded-xl shadow-lg px-3 py-2 flex items-center gap-4 z-10 transition-all">
+    <div className="absolute top-[72px] left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] px-3 py-1.5 flex items-center gap-3 z-10 transition-all">
       
       {tools.nodes.length > 0 && (
-        <div className={`flex items-center gap-1 ${tools.edges.length > 0 ? 'border-r border-primary/10 pr-4' : ''}`}>
-          <div className="text-[10px] uppercase font-bold text-primary/40 mr-2">Nodes</div>
+        <div className={`flex items-center gap-1 ${tools.edges.length > 0 ? 'border-r border-gray-200/80 pr-3' : ''}`}>
+          <div className="text-[10px] uppercase font-bold text-gray-400 mr-1.5 tracking-wider select-none">Nodes</div>
           {tools.nodes.map(tool => (
             <ToolbarButton 
               key={tool.id} 
@@ -207,12 +224,13 @@ export function UMLToolbarPlugin({ excalidrawAPI }: Props) {
       
       {tools.edges.length > 0 && (
         <div className="flex items-center gap-1">
-          <div className="text-[10px] uppercase font-bold text-primary/40 mr-2">Edges</div>
+          <div className="text-[10px] uppercase font-bold text-gray-400 mr-1.5 tracking-wider select-none">Edges</div>
           {tools.edges.map(tool => (
             <ToolbarButton 
               key={tool.id} 
               icon={getIcon(tool.id)} 
               tooltip={tool.label} 
+              isActive={activeEdgeTool === tool.id}
               onClick={() => handleToolClick(tool.id, true)} 
             />
           ))}
@@ -230,15 +248,16 @@ function ToolbarButton({ icon, tooltip, isActive, onClick }: { icon: React.React
         e.stopPropagation();
         onClick();
       }}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors group relative cursor-pointer ${
+      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors group relative cursor-pointer ${
         isActive 
-          ? "bg-primary/10 text-primary-ink" 
-          : "text-primary/70 hover:bg-primary/5 hover:text-primary-ink"
+          ? "bg-[#ececfc] text-black font-bold [&_svg]:stroke-[2.4px]" 
+          : "text-[#5f6368] hover:bg-[#f1f0ff] hover:text-gray-900 [&_svg]:stroke-[1.8px]"
       }`}
+      aria-label={tooltip}
       title={tooltip}
     >
       {icon}
-      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary-ink text-surface text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+      <span className="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-gray-900 text-white text-[11px] font-medium rounded-md shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150">
         {tooltip}
       </span>
     </button>

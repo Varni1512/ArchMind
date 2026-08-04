@@ -182,7 +182,7 @@ function WorkspaceContent() {
         {!isExplorerOpen && (
           <button 
             onClick={() => setIsExplorerOpen(true)}
-            className="absolute top-4 left-4 bg-surface border border-primary/10 rounded-xl shadow-lg p-2 flex items-center justify-center text-blue-600 hover:bg-primary/5 transition-colors z-10 cursor-pointer"
+            className="absolute top-4 left-4 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-xl shadow-md p-2.5 flex items-center justify-center text-blue-600 hover:bg-[#f1f0ff] transition-colors z-10 cursor-pointer"
             title="Open Question Explorer"
           >
             <BookOpen size={20} />
@@ -193,7 +193,7 @@ function WorkspaceContent() {
         {!isAssistantOpen && (
           <button 
             onClick={() => setIsAssistantOpen(true)}
-            className="absolute top-20 right-4 bg-surface border border-primary/10 rounded-xl shadow-lg p-2 flex items-center justify-center text-purple-600 hover:bg-primary/5 transition-colors z-10 cursor-pointer"
+            className="absolute top-20 right-4 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-xl shadow-md p-2.5 flex items-center justify-center text-purple-600 hover:bg-[#f1f0ff] transition-colors z-10 cursor-pointer"
             title="Open LLD Assistant"
           >
             <Sparkles size={20} />
@@ -202,10 +202,10 @@ function WorkspaceContent() {
 
         {/* Auto-Save Status Badge */}
         {saveStatus !== 'idle' && (
-          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-surface/90 backdrop-blur-md border border-primary/10 rounded-full shadow-sm text-xs font-medium text-primary/70 transition-all duration-300 pointer-events-none select-none">
+          <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-full shadow-sm text-xs font-medium text-gray-700 transition-all duration-300 pointer-events-none select-none">
             {saveStatus === 'saving' ? (
               <>
-                <Loader2 size={13} className="animate-spin text-primary" />
+                <Loader2 size={13} className="animate-spin text-gray-700" />
                 <span>Saving LLD diagram...</span>
               </>
             ) : (

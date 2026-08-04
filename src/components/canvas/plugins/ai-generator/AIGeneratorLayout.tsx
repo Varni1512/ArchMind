@@ -76,10 +76,21 @@ function WorkspaceContent() {
     };
   }, []);
 
-  // Restore saved session metadata on initial mount
+  // Restore saved session metadata on initial mount (with 24h expiration check)
   useEffect(() => {
     if (!hasRestoredRef.current) {
       hasRestoredRef.current = true;
+      
+      // 1. Check if previous active session is older than 24 hours (1 day).
+      // If older, automatically archive it to History and clear active session so workspace opens blank.
+      const isExpired = AIGeneratorHistoryManager.checkAndArchiveExpiredSession();
+      if (isExpired) {
+        setPrompt('');
+        setExplanationData(null);
+        setLoadedElements([]);
+        return;
+      }
+
       const session = AIGeneratorHistoryManager.loadSession();
       if (session) {
         if (session.elements && Array.isArray(session.elements)) {

@@ -11,6 +11,7 @@ import {
   areElementsEqual
 } from '@/lib/storage/canvasPersistence';
 import { normalizeFractionalIndices } from '@/lib/canvas/elementOrdering';
+import { AIGeneratorHistoryManager } from './plugins/ai-generator/storage/AIGeneratorHistoryManager';
 import { CloudCheck, Cloud, Loader2 } from 'lucide-react';
 
 interface Props {
@@ -107,6 +108,9 @@ export default function ArchMindCanvas({
     }
 
     if (storageKey) {
+      if (storageKey === STORAGE_KEYS.AI_SESSION) {
+        AIGeneratorHistoryManager.checkAndArchiveExpiredSession();
+      }
       const saved = loadCanvasData<PersistedCanvasData>(storageKey);
       if (saved && Array.isArray(saved.elements)) {
         const activeElements = saved.elements.filter((el: any) => el && !el.isDeleted);
