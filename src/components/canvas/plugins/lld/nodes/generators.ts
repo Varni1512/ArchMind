@@ -26,38 +26,38 @@ export function generateClassNode(
   const hasMethods = methods && methods.length > 0;
 
   const headerTitle = stereotype ? `<<${stereotype}>>\n${name}` : name;
-  const attrContent = hasAttributes ? attributes.join("\n") : "";
-  const methodContent = hasMethods ? methods.join("\n") : (stereotype ? "" : "+ method(): returnType");
+  const attrContent = hasAttributes ? attributes.join("\n") : "+ attribute: type";
+  const methodContent = hasMethods ? methods.join("\n") : "+ method(): returnType";
 
   const estHeader = estimateTextDimensions(headerTitle, 16);
-  const estAttr = attrContent ? estimateTextDimensions(attrContent, 14) : { width: 0, height: 0, lineCount: 0 };
-  const estMethod = methodContent ? estimateTextDimensions(methodContent, 14) : { width: 0, height: 0, lineCount: 0 };
+  const estAttr = estimateTextDimensions(attrContent, 14);
+  const estMethod = estimateTextDimensions(methodContent, 14);
 
   const minWidth = Math.max(200, estHeader.width + 32, estAttr.width + 32, estMethod.width + 32);
   const width = minWidth;
 
   const headerHeight = Math.max(stereotype ? 56 : 38, estHeader.height + 16);
-  const attrHeight = attrContent ? Math.max(38, estAttr.height + 16) : 0;
-  const methodHeight = methodContent ? Math.max(38, estMethod.height + 16) : 0;
+  const attrHeight = Math.max(38, estAttr.height + 16);
+  const methodHeight = Math.max(38, estMethod.height + 16);
 
-  const totalHeight = headerHeight + attrHeight + methodHeight;
+  const totalHeight = (hasAttributes || (!stereotype || stereotype === 'abstract'))
+    ? headerHeight + attrHeight + methodHeight
+    : headerHeight + methodHeight;
 
   const customData = { diagramType: 'Class Diagram', nodeType: stereotype || 'Class' };
+  const strokeWidth = isAbstract ? 1.5 : 2;
 
-  // 1. Unified Card Container (4 Rounded Outer Borders!)
+  // Single outer card with 4 outer corners rounded
   const card = createRectangle(x, y, width, totalHeight, {
     groupIds: [groupId],
     backgroundColor: "#ffffff",
     strokeColor: "#1e293b",
-    strokeWidth: isAbstract ? 1.5 : 2,
-    roundness: { type: 2 }, // 4 rounded outer borders
+    strokeWidth,
+    roundness: { type: 3 },
     boundElements: [],
     customData,
   });
 
-  const elements: any[] = [card];
-
-  // 2. Header Text (centered in top section)
   const headerText = createText(
     Math.round(x + (width - estHeader.width) / 2),
     Math.round(y + (headerHeight - estHeader.height) / 2),
@@ -71,22 +71,17 @@ export function generateClassNode(
       customData: { role: 'header' },
     }
   );
-  elements.push(headerText);
 
-  let currentY = y + headerHeight;
+  const divider1 = createLine(x, y + headerHeight, width, 0, {
+    groupIds: [groupId],
+    strokeColor: "#1e293b",
+    strokeWidth: 1.5,
+  });
 
-  // 3. Attributes Divider Line & Text
-  if (attrContent) {
-    const line1 = createLine(x, currentY, width, 0, {
-      groupIds: [groupId],
-      strokeColor: "#1e293b",
-      strokeWidth: 1.5,
-    });
-    elements.push(line1);
-
+  if (hasAttributes || (!stereotype || stereotype === 'abstract')) {
     const attrText = createText(
       Math.round(x + 12),
-      Math.round(currentY + (attrHeight - estAttr.height) / 2),
+      Math.round(y + headerHeight + (attrHeight - estAttr.height) / 2),
       attrContent,
       {
         groupIds: [groupId],
@@ -97,23 +92,16 @@ export function generateClassNode(
         customData: { role: 'attributes' },
       }
     );
-    elements.push(attrText);
 
-    currentY += attrHeight;
-  }
-
-  // 4. Methods Divider Line & Text
-  if (methodContent) {
-    const line2 = createLine(x, currentY, width, 0, {
+    const divider2 = createLine(x, y + headerHeight + attrHeight, width, 0, {
       groupIds: [groupId],
       strokeColor: "#1e293b",
       strokeWidth: 1.5,
     });
-    elements.push(line2);
 
     const methodText = createText(
       Math.round(x + 12),
-      Math.round(currentY + (methodHeight - estMethod.height) / 2),
+      Math.round(y + headerHeight + attrHeight + (methodHeight - estMethod.height) / 2),
       methodContent,
       {
         groupIds: [groupId],
@@ -124,10 +112,26 @@ export function generateClassNode(
         customData: { role: 'methods' },
       }
     );
-    elements.push(methodText);
-  }
 
-  return elements;
+    return [card, headerText, divider1, attrText, divider2, methodText];
+  } else {
+    // 2 rows (Interface): Header + Methods
+    const methodText = createText(
+      Math.round(x + 12),
+      Math.round(y + headerHeight + (methodHeight - estMethod.height) / 2),
+      methodContent,
+      {
+        groupIds: [groupId],
+        fontSize: 14,
+        textAlign: "left",
+        verticalAlign: "middle",
+        containerId: null,
+        customData: { role: 'methods' },
+      }
+    );
+
+    return [card, headerText, divider1, methodText];
+  }
 }
 
 export function generateInterfaceNode(x: number, y: number, name: string = "Interface", methods: string[] = ["+ method(): returnType"]) {
@@ -144,24 +148,21 @@ export function generateEnumNode(x: number, y: number) {
   const headerHeight = 56;
   const bodyHeight = 80;
   const totalHeight = headerHeight + bodyHeight;
-
   const customData = { diagramType: 'Class Diagram', nodeType: 'Enum' };
 
-  // 1. Unified Card Container (4 Rounded Outer Borders!)
   const card = createRectangle(x, y, width, totalHeight, {
     groupIds: [groupId],
     backgroundColor: "#ffffff",
     strokeColor: "#1e293b",
     strokeWidth: 2,
-    roundness: { type: 2 },
+    roundness: { type: 3 },
     boundElements: [],
     customData,
   });
 
-  // 2. Header Text
   const headerText = createText(
-    Math.round(x + 20),
-    Math.round(y + 12),
+    Math.round(x + (width - 120) / 2),
+    Math.round(y + 10),
     "<<enum>>\nEnumName",
     {
       groupIds: [groupId],
@@ -173,14 +174,12 @@ export function generateEnumNode(x: number, y: number) {
     }
   );
 
-  // 3. Divider Line
   const divider = createLine(x, y + headerHeight, width, 0, {
     groupIds: [groupId],
     strokeColor: "#1e293b",
     strokeWidth: 1.5,
   });
 
-  // 4. Body Values Text
   const bodyText = createText(
     Math.round(x + 12),
     Math.round(y + headerHeight + 12),
@@ -249,7 +248,7 @@ export function generateNoteNode(x: number, y: number, text: string = "This is\n
 
 export function generateObjectNode(x: number, y: number, name: string = "object1 : ClassName", attributes: string[] = ["attribute1 = value1", "attribute2 = value2"]) {
   const groupId = generateId();
-  const attrContent = attributes.join("\n") || " ";
+  const attrContent = attributes.join("\n") || "attribute1 = value1";
   const estHeader = estimateTextDimensions(name, 16);
   const estAttr = estimateTextDimensions(attrContent, 14);
 
@@ -260,13 +259,12 @@ export function generateObjectNode(x: number, y: number, name: string = "object1
 
   const customData = { diagramType: 'Object Diagram', nodeType: 'Object' };
 
-  // 1. Unified Card Container (4 Rounded Outer Borders!)
   const card = createRectangle(x, y, width, totalHeight, {
     groupIds: [groupId],
     backgroundColor: "#ffffff",
     strokeColor: "#1e293b",
     strokeWidth: 2,
-    roundness: { type: 2 },
+    roundness: { type: 3 },
     boundElements: [],
     customData,
   });
@@ -293,7 +291,7 @@ export function generateObjectNode(x: number, y: number, name: string = "object1
 
   const bodyText = createText(
     Math.round(x + 12),
-    Math.round(y + headerHeight + 8),
+    Math.round(y + headerHeight + (attrHeight - estAttr.height) / 2),
     attrContent,
     {
       groupIds: [groupId],

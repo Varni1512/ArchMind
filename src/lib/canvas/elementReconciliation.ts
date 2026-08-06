@@ -5,7 +5,7 @@
  * accurate text centering, and dynamic auto-expansion of canvas elements across LLD, HLD, and AI generator diagrams.
  */
 
-import { createText } from '@/components/canvas/plugins/lld/utils/elementGenerator';
+import { createText, createLine } from '@/components/canvas/plugins/lld/utils/elementGenerator';
 
 export interface ReconciliationResult {
   elements: any[];
@@ -66,18 +66,21 @@ export function reconcileCanvasElements(
     return cloned;
   });
 
-  // Group elements by top-level groupId
+  // Group elements by cardId or top-level groupId
   const groupToElements = new Map<string, any[]>();
   const ungroupedElements: any[] = [];
 
   clonedElements.forEach(el => {
     if (el.isDeleted) return;
-    if (el.groupIds && Array.isArray(el.groupIds) && el.groupIds.length > 0) {
-      const mainGroupId = el.groupIds[0];
-      if (!groupToElements.has(mainGroupId)) {
-        groupToElements.set(mainGroupId, []);
+    const cardId = el.customData?.cardId;
+    const mainGroupId = el.groupIds && Array.isArray(el.groupIds) && el.groupIds.length > 0 ? el.groupIds[0] : null;
+    const groupingKey = cardId || mainGroupId;
+
+    if (groupingKey) {
+      if (!groupToElements.has(groupingKey)) {
+        groupToElements.set(groupingKey, []);
       }
-      groupToElements.get(mainGroupId)!.push(el);
+      groupToElements.get(groupingKey)!.push(el);
     } else {
       ungroupedElements.push(el);
     }
@@ -114,9 +117,9 @@ export function reconcileCanvasElements(
     if (rectangles.length === 1 && (lines.length >= 1 || texts.length >= 1 || isUMLNodeType)) {
       const card = rectangles[0];
 
-      // Enforce 4 rounded outer borders on the unified container!
-      if (card.roundness?.type !== 2) {
-        card.roundness = { type: 2 };
+      // Enforce 4 standard rounded outer borders (adaptive radius type: 3)
+      if (card.roundness?.type !== 3) {
+        card.roundness = { type: 3 };
         hasChanged = true;
       }
 
@@ -126,90 +129,183 @@ export function reconcileCanvasElements(
         hasChanged = true;
       }
 
-      // If any text elements are missing for the compartments, recreate them with default demo text!
-      const expectedTextCount = Math.max(1, lines.length + 1);
-      if (texts.length < expectedTextCount) {
-        const isInterface = nodeType === 'Interface' || nodeType === 'interface';
-        const isAbstract = nodeType === 'AbstractClass' || nodeType === 'abstract';
-        const isEnum = nodeType === 'Enum';
-        const isObj = nodeType === 'Object';
+      const isInterface = nodeType === 'Interface' || nodeType === 'interface';
+      const isAbstract = nodeType === 'AbstractClass' || nodeType === 'abstract';
+      const isEnum = nodeType === 'Enum';
+      const isObj = nodeType === 'Object';
 
-        while (texts.length < expectedTextCount) {
-          const currentIdx = texts.length;
-          let defaultDemoText = '';
-          if (currentIdx === 0) {
-            defaultDemoText = isInterface ? '<<interface>>\nInterface' : (isAbstract ? '<<abstract>>\nAbstractClass' : (isEnum ? '<<enum>>\nEnumName' : (isObj ? 'object1 : ClassName' : 'ClassName')));
-          } else if (currentIdx === 1 && expectedTextCount === 3) {
-            defaultDemoText = '+ attribute: type';
-          } else {
-            defaultDemoText = '+ method(): returnType';
+      // 1. Clean up rogue empty text elements (e.g. from accidental double clicks)
+      const expectedCount = isInterface || isEnum || isObj || (lines.length === 1 && !isAbstract && nodeType !== 'Class') ? 2 : 3;
+      if (texts.length > expectedCount) {
+        for (let i = texts.length - 1; i >= 0 && texts.length > expectedCount; i--) {
+          const t = texts[i];
+          const isEmpty = (!t.text || !t.text.trim()) && (!t.originalText || !t.originalText.trim());
+          if (isEmpty && t.id !== activeEditingTextId) {
+            t.isDeleted = true;
+            texts.splice(i, 1);
+            hasChanged = true;
           }
-
-          const newT = createText(card.x + 12, card.y + currentIdx * 40 + 10, defaultDemoText, {
-            groupIds: card.groupIds ? [...card.groupIds] : [],
-            containerId: null,
-            fontSize: currentIdx === 0 ? 16 : 14,
-            textAlign: currentIdx === 0 ? 'center' : 'left',
-          });
-          clonedElements.push(newT);
-          texts.push(newT);
-          groupEls.push(newT);
-          hasChanged = true;
         }
       }
 
-      // Sort texts by role (Header -> Attributes -> Methods) to prevent drag-inversion!
-      const roleWeight = (t: any): number => {
-        const role = t.customData?.role;
-        if (role === 'header') return 1;
-        if (role === 'attributes' || role === 'values') return 2;
-        if (role === 'methods') return 3;
+      // 2. Identify Compartment Texts by Permanent Role or Structure
+      let headerText = texts.find(t => t.customData?.role === 'header');
+      let attrText = texts.find(t => t.customData?.role === 'attributes' || t.customData?.role === 'values');
+      let methodText = texts.find(t => t.customData?.role === 'methods');
 
-        const textContent = t.text || t.originalText || '';
-        if (textContent.includes('<<')) return 1;
-        if (textContent.includes('(') && textContent.includes(')')) return 3;
-        if (textContent.startsWith('+') || textContent.startsWith('-') || textContent.startsWith('#') || textContent.startsWith('~')) return 2;
-        return 1;
-      };
+      if (!headerText) {
+        headerText = texts.find(t => (t.text || t.originalText || '').includes('<<')) ||
+                     texts.find(t => t !== attrText && t !== methodText && !(t.text || t.originalText || '').includes('(') && !(t.text || t.originalText || '').startsWith('+')) ||
+                     texts[0];
+      }
+      if (headerText) {
+        if (!headerText.customData) headerText.customData = {};
+        headerText.customData.role = 'header';
+      }
 
-      texts.sort((a, b) => {
-        const diff = roleWeight(a) - roleWeight(b);
-        if (diff !== 0) return diff;
-        return a.y - b.y;
-      });
+      if (expectedCount === 3) {
+        if (!methodText) {
+          methodText = texts.find(t => t !== headerText && t !== attrText && (t.text || t.originalText || '').includes('(') && (t.text || t.originalText || '').includes(')')) ||
+                       texts.find(t => t !== headerText && t !== attrText && t.y > (card.y + 70));
+        }
+        if (methodText) {
+          if (!methodText.customData) methodText.customData = {};
+          methodText.customData.role = 'methods';
+        }
 
-      // Ensure permanent role tagging on customData
-      texts.forEach((t, idx) => {
-        if (!t.customData) t.customData = {};
-        if (idx === 0) t.customData.role = 'header';
-        else if (idx === 1 && (lines.length >= 2 || texts.length >= 3)) t.customData.role = 'attributes';
-        else if (idx === texts.length - 1 && lines.length >= 1) t.customData.role = 'methods';
-      });
+        if (!attrText) {
+          attrText = texts.find(t => t !== headerText && t !== methodText);
+        }
+        if (attrText) {
+          if (!attrText.customData) attrText.customData = {};
+          attrText.customData.role = 'attributes';
+        }
+      } else {
+        if (!methodText && !attrText) {
+          const secondText = texts.find(t => t !== headerText);
+          if (secondText) {
+            if (!secondText.customData) secondText.customData = {};
+            secondText.customData.role = isInterface ? 'methods' : (isEnum ? 'values' : 'attributes');
+            if (isInterface) methodText = secondText;
+            else attrText = secondText;
+          }
+        }
+      }
 
-      // Calculate section heights and minimum required width
+      // 3. Recreate or fill any missing/empty compartment texts with default content
+      const defaultHeader = isInterface ? '<<interface>>\nInterface' : (isAbstract ? '<<abstract>>\nAbstractClass' : (isEnum ? '<<enum>>\nEnumName' : (isObj ? 'object1 : ClassName' : 'ClassName')));
+      if (!headerText) {
+        headerText = createText(card.x + 12, card.y + 10, defaultHeader, {
+          groupIds: card.groupIds ? [...card.groupIds] : [],
+          containerId: null,
+          fontSize: 16,
+          textAlign: 'center',
+          customData: { role: 'header' },
+        });
+        clonedElements.push(headerText);
+        texts.push(headerText);
+        groupEls.push(headerText);
+        hasChanged = true;
+      } else if ((!headerText.text?.trim()) && (!headerText.originalText?.trim()) && headerText.id !== activeEditingTextId) {
+        headerText.text = defaultHeader;
+        headerText.originalText = defaultHeader;
+        hasChanged = true;
+      }
+
+      if (expectedCount === 3 && !attrText) {
+        attrText = createText(card.x + 12, card.y + 50, '+ attribute: type', {
+          groupIds: card.groupIds ? [...card.groupIds] : [],
+          containerId: null,
+          fontSize: 14,
+          textAlign: 'left',
+          customData: { role: 'attributes' },
+        });
+        clonedElements.push(attrText);
+        texts.push(attrText);
+        groupEls.push(attrText);
+        hasChanged = true;
+      } else if (attrText && (!attrText.text?.trim()) && (!attrText.originalText?.trim()) && attrText.id !== activeEditingTextId) {
+        attrText.text = '+ attribute: type';
+        attrText.originalText = '+ attribute: type';
+        hasChanged = true;
+      }
+
+      if (expectedCount === 3 && !methodText) {
+        const defaultMethod = isAbstract ? '+ abstractMethod(): void\n+ method(): returnType' : '+ method(): returnType';
+        methodText = createText(card.x + 12, card.y + 90, defaultMethod, {
+          groupIds: card.groupIds ? [...card.groupIds] : [],
+          containerId: null,
+          fontSize: 14,
+          textAlign: 'left',
+          customData: { role: 'methods' },
+        });
+        clonedElements.push(methodText);
+        texts.push(methodText);
+        groupEls.push(methodText);
+        hasChanged = true;
+      } else if (methodText && (!methodText.text?.trim()) && (!methodText.originalText?.trim()) && methodText.id !== activeEditingTextId) {
+        const defaultMethod = isAbstract ? '+ abstractMethod(): void\n+ method(): returnType' : '+ method(): returnType';
+        methodText.text = defaultMethod;
+        methodText.originalText = defaultMethod;
+        hasChanged = true;
+      } else if (expectedCount === 2 && !methodText && !attrText) {
+        const defaultBody = isInterface ? '+ method(): returnType' : (isEnum ? 'VALUE_1\nVALUE_2\nVALUE_3' : 'attribute1 = value1');
+        const role = isInterface ? 'methods' : (isEnum ? 'values' : 'attributes');
+        const newBody = createText(card.x + 12, card.y + 50, defaultBody, {
+          groupIds: card.groupIds ? [...card.groupIds] : [],
+          containerId: null,
+          fontSize: 14,
+          textAlign: 'left',
+          customData: { role },
+        });
+        if (isInterface) methodText = newBody;
+        else attrText = newBody;
+        clonedElements.push(newBody);
+        texts.push(newBody);
+        groupEls.push(newBody);
+        hasChanged = true;
+      }
+
+      // Ordered list of compartments:
+      const compartmentTexts: any[] = expectedCount === 3
+        ? [headerText, attrText, methodText]
+        : [headerText, methodText || attrText];
+
+      // 4. Calculate compartment heights & min required width
       let minRequiredWidth = 180;
       const sectionHeights: number[] = [];
 
-      texts.forEach((t, idx) => {
+      compartmentTexts.forEach((t, idx) => {
+        if (!t) return;
         if (t.containerId !== null) {
           t.containerId = null;
           hasChanged = true;
         }
-
         if (!t.text && t.originalText) {
           t.text = t.originalText;
           hasChanged = true;
         }
 
-        const textContent = t.text || t.originalText || '';
         const isHeader = (idx === 0);
-        const fontSize = t.fontSize || (isHeader ? 16 : 14);
-        const est = estimateTextDimensions(textContent, fontSize);
+        const expectedFontSize = isHeader ? 16 : 14;
+
+        // Lock typography to prevent Excalidraw group-scale from distorting font size
+        if (t.fontSize !== expectedFontSize) {
+          t.fontSize = expectedFontSize;
+          hasChanged = true;
+        }
+        if (t.scale && (t.scale[0] !== 1 || t.scale[1] !== 1)) {
+          t.scale = [1, 1];
+          hasChanged = true;
+        }
+
+        const textContent = t.text || t.originalText || '';
+        const est = estimateTextDimensions(textContent, expectedFontSize);
         minRequiredWidth = Math.max(minRequiredWidth, est.width + 32);
 
         const hasStereotype = isHeader && textContent.includes('<<');
         const minBaseHeight = isHeader ? (hasStereotype ? 56 : 38) : 38;
-        const effectiveH = Math.max(t.height || 0, est.height);
+        const effectiveH = est.height;
         const reqHeight = Math.max(minBaseHeight, effectiveH + 16);
         sectionHeights.push(reqHeight);
       });
@@ -220,22 +316,58 @@ export function reconcileCanvasElements(
         hasChanged = true;
       }
 
-      const totalHeight = sectionHeights.reduce((sum, h) => sum + h, 0);
-      if (Math.abs(card.height - totalHeight) > 1) {
-        card.height = totalHeight;
+      const totalMinHeight = sectionHeights.reduce((sum, h) => sum + h, 0);
+      const targetHeight = Math.max(card.height, totalMinHeight);
+      if (Math.abs(card.height - targetHeight) > 1) {
+        card.height = targetHeight;
         hasChanged = true;
       }
 
-      // Position divider lines and section texts
-      let currentY = card.y;
+      // Distribute extra height across body compartments so user can freely resize height!
+      const extraHeight = Math.max(0, card.height - totalMinHeight);
+      const bodyCount = compartmentTexts.length - 1;
+      const extraPerBody = bodyCount > 0 ? extraHeight / bodyCount : extraHeight;
+
+      const finalSectionHeights = sectionHeights.map((h, idx) => {
+        if (idx === 0) return h;
+        return h + extraPerBody;
+      });
+
+      // 5. Ensure required number of divider lines exist (expectedCount - 1)
+      const expectedLines = expectedCount - 1;
+      while (lines.length < expectedLines) {
+        const newLine = createLine(card.x, card.y + 50, card.width, 0, {
+          groupIds: card.groupIds ? [...card.groupIds] : [],
+          strokeColor: card.strokeColor || '#1e293b',
+          strokeWidth: 1.5,
+        });
+        clonedElements.push(newLine);
+        lines.push(newLine);
+        groupEls.push(newLine);
+        hasChanged = true;
+      }
+
+      if (lines.length > expectedLines) {
+        for (let i = expectedLines; i < lines.length; i++) {
+          if (!lines[i].isDeleted) {
+            lines[i].isDeleted = true;
+            hasChanged = true;
+          }
+        }
+      }
+
       lines.sort((a, b) => a.y - b.y);
 
-      texts.forEach((t, idx) => {
+      // 6. Position divider lines and compartment texts cleanly
+      let currentY = card.y;
+
+      compartmentTexts.forEach((t, idx) => {
+        if (!t) return;
         const isHeader = (idx === 0);
         const isCurrentlyEditingThis = !!(activeEditingTextId && t.id === activeEditingTextId);
-        const secH = sectionHeights[idx];
+        const secH = finalSectionHeights[idx];
 
-        // If not header, ensure divider line is aligned and stretched across the card
+        // Divider line above this section
         if (idx > 0 && lines[idx - 1]) {
           const line = lines[idx - 1];
           if (
@@ -250,17 +382,20 @@ export function reconcileCanvasElements(
             line.points = [[0, 0], [card.width, 0]];
             line.width = card.width;
             line.height = 0;
+            line.strokeColor = card.strokeColor || '#1e293b';
+            line.strokeWidth = 1.5;
             hasChanged = true;
           }
         }
 
         if (!isCurrentlyEditingThis) {
-          const est = estimateTextDimensions(t.text || t.originalText || '', t.fontSize || (isHeader ? 16 : 14));
-          if (!t.width || t.width <= 0 || t.width > card.width - 10) {
+          const expectedFontSize = isHeader ? 16 : 14;
+          const est = estimateTextDimensions(t.text || t.originalText || '', expectedFontSize);
+          if (t.width !== est.width) {
             t.width = est.width;
             hasChanged = true;
           }
-          if (!t.height || t.height <= 0) {
+          if (t.height !== est.height) {
             t.height = est.height;
             hasChanged = true;
           }
@@ -270,9 +405,9 @@ export function reconcileCanvasElements(
           t.verticalAlign = 'middle';
 
           const expX = isHeader
-            ? Math.round(card.x + (card.width - (t.width || est.width)) / 2)
+            ? Math.round(card.x + (card.width - est.width) / 2)
             : Math.round(card.x + 12);
-          const expY = Math.round(currentY + (secH - (t.height || est.height)) / 2);
+          const expY = Math.round(currentY + (secH - est.height) / 2);
 
           if (Math.abs(t.x - expX) > 2) {
             t.x = expX;
@@ -291,174 +426,32 @@ export function reconcileCanvasElements(
     }
 
     // -------------------------------------------------------------
-    // 1B. LEGACY UML STACKED COMPOSITES (Class, Interface, AbstractClass, Enum, Object)
+    // 2. CONVERT MULTI-RECTANGLE UML TO 4-CORNER ROUNDED CARD (Class, Interface, AbstractClass, Enum, Object)
     // -------------------------------------------------------------
     const isStackedUML = (
-      (rectangles.length >= 2 && texts.length >= 1) ||
       nodeType === 'Class' ||
       nodeType === 'Interface' ||
       nodeType === 'AbstractClass' ||
       nodeType === 'abstract' ||
       nodeType === 'interface' ||
       nodeType === 'Enum' ||
-      nodeType === 'Object'
+      nodeType === 'Object' ||
+      customDataEl?.customData?.diagramType === 'Class Diagram' ||
+      customDataEl?.customData?.diagramType === 'Object Diagram'
     );
 
     if (isStackedUML && rectangles.length >= 2) {
-      // Sort rectangles by their Y coordinate (top to bottom)
       rectangles.sort((a, b) => a.y - b.y);
-
-      // Sort texts by role (Header -> Attributes -> Methods) to prevent drag-inversion!
-      const roleWeight = (t: any): number => {
-        const role = t.customData?.role;
-        if (role === 'header') return 1;
-        if (role === 'attributes' || role === 'values') return 2;
-        if (role === 'methods') return 3;
-
-        const textContent = t.text || t.originalText || '';
-        if (textContent.includes('<<')) return 1;
-        if (textContent.includes('(') && textContent.includes(')')) return 3;
-        if (textContent.startsWith('+') || textContent.startsWith('-') || textContent.startsWith('#') || textContent.startsWith('~')) return 2;
-        return 1;
-      };
-
-      texts.sort((a, b) => {
-        const diff = roleWeight(a) - roleWeight(b);
-        if (diff !== 0) return diff;
-        return a.y - b.y;
-      });
-
-      texts.forEach((t, idx) => {
-        if (!t.customData) t.customData = {};
-        if (idx === 0) t.customData.role = 'header';
-        else if (idx === 1 && (rectangles.length >= 3 || texts.length >= 3)) t.customData.role = 'attributes';
-        else if (idx === texts.length - 1 && rectangles.length >= 2) t.customData.role = 'methods';
-      });
-
-      // Top rectangle becomes the single outer container (4 rounded outer borders!)
       const card = rectangles[0];
-      if (card.roundness?.type !== 2) {
-        card.roundness = { type: 2 };
-        hasChanged = true;
-      }
-      if (card.boundElements && card.boundElements.length > 0) {
-        card.boundElements = [];
-        hasChanged = true;
-      }
+      card.roundness = { type: 3 };
 
-      let targetX = card.x;
-      let targetWidth = card.width;
-
-      // Calculate section heights and min required width
-      let minRequiredWidth = 180;
-      const sectionHeights: number[] = [];
-
-      texts.forEach((t, idx) => {
-        if (t.containerId !== null) {
-          t.containerId = null;
-          hasChanged = true;
-        }
-
-        const textContent = t.text || t.originalText || '';
-        const isHeader = (idx === 0);
-        const fontSize = t.fontSize || (isHeader ? 16 : 14);
-        const est = estimateTextDimensions(textContent, fontSize);
-        minRequiredWidth = Math.max(minRequiredWidth, est.width + 32);
-
-        const hasStereotype = isHeader && textContent.includes('<<');
-        const minBaseHeight = isHeader ? (hasStereotype ? 56 : 38) : 38;
-        const effectiveH = Math.max(t.height || 0, est.height);
-        const reqHeight = Math.max(minBaseHeight, effectiveH + 16);
-        sectionHeights.push(reqHeight);
-      });
-
-      targetWidth = Math.max(targetWidth, minRequiredWidth);
-      if (Math.abs(card.x - targetX) > 1) { card.x = targetX; hasChanged = true; }
-      if (Math.abs(card.width - targetWidth) > 1) { card.width = targetWidth; hasChanged = true; }
-
-      const totalHeight = sectionHeights.reduce((sum, h) => sum + h, 0);
-      if (Math.abs(card.height - totalHeight) > 1) { card.height = totalHeight; hasChanged = true; }
-
-      // Convert extra rectangles into divider lines
       const extraRects = rectangles.slice(1);
-      let currentY = card.y;
-
-      texts.forEach((t, idx) => {
-        const isHeader = (idx === 0);
-        const isCurrentlyEditingThis = !!(activeEditingTextId && t.id === activeEditingTextId);
-        const secH = sectionHeights[idx];
-
-        if (t.containerId !== null) {
-          t.containerId = null;
+      extraRects.forEach(r => {
+        if (!r.isDeleted) {
+          r.isDeleted = true;
           hasChanged = true;
         }
-
-        // Divider line above this section (if idx > 0)
-        if (idx > 0) {
-          const divider = extraRects[idx - 1];
-          if (divider) {
-            if (
-              divider.type !== 'line' ||
-              Math.abs(divider.x - card.x) > 1 ||
-              Math.abs(divider.y - currentY) > 1 ||
-              Math.abs(divider.width - card.width) > 1 ||
-              !divider.points ||
-              divider.points[1]?.[0] !== card.width
-            ) {
-              divider.type = 'line';
-              divider.x = card.x;
-              divider.y = currentY;
-              divider.points = [[0, 0], [card.width, 0]];
-              divider.width = card.width;
-              divider.height = 0;
-              divider.strokeColor = card.strokeColor || '#1e293b';
-              divider.strokeWidth = 1.5;
-              divider.roundness = null;
-              divider.backgroundColor = 'transparent';
-              divider.fillStyle = 'solid';
-              divider.boundElements = null;
-              hasChanged = true;
-            }
-          }
-        }
-
-        if (!isCurrentlyEditingThis) {
-          const est = estimateTextDimensions(t.text || t.originalText || '', t.fontSize || (isHeader ? 16 : 14));
-          if (!t.width || t.width <= 0 || t.width > card.width - 10) {
-            t.width = est.width;
-            hasChanged = true;
-          }
-          if (!t.height || t.height <= 0) {
-            t.height = est.height;
-            hasChanged = true;
-          }
-
-          t.autoResize = true;
-          t.textAlign = isHeader ? 'center' : 'left';
-          t.verticalAlign = 'middle';
-
-          const expX = isHeader
-            ? Math.round(card.x + (card.width - (t.width || est.width)) / 2)
-            : Math.round(card.x + 12);
-          const expY = Math.round(currentY + (secH - (t.height || est.height)) / 2);
-
-          if (Math.abs(t.x - expX) > 2) { t.x = expX; hasChanged = true; }
-          if (Math.abs(t.y - expY) > 2) { t.y = expY; hasChanged = true; }
-        }
-
-        currentY += secH;
       });
-
-      // If there are more extra rectangles than needed dividers, mark them deleted
-      if (extraRects.length > texts.length - 1) {
-        for (let i = texts.length - 1; i < extraRects.length; i++) {
-          if (!extraRects[i].isDeleted) {
-            extraRects[i].isDeleted = true;
-            hasChanged = true;
-          }
-        }
-      }
-
       return;
     }
 
@@ -481,6 +474,11 @@ export function reconcileCanvasElements(
         }
         if (!body.boundElements || !body.boundElements.some((b: any) => b.id === bodyText.id)) {
           body.boundElements = [{ type: 'text', id: bodyText.id }];
+          hasChanged = true;
+        }
+
+        if (bodyText.scale && (bodyText.scale[0] !== 1 || bodyText.scale[1] !== 1)) {
+          bodyText.scale = [1, 1];
           hasChanged = true;
         }
 
@@ -542,6 +540,11 @@ export function reconcileCanvasElements(
         }
         if (!mainBody.boundElements || !mainBody.boundElements.some((b: any) => b.id === mainText.id)) {
           mainBody.boundElements = [{ type: 'text', id: mainText.id }];
+          hasChanged = true;
+        }
+
+        if (mainText.scale && (mainText.scale[0] !== 1 || mainText.scale[1] !== 1)) {
+          mainText.scale = [1, 1];
           hasChanged = true;
         }
 
@@ -614,6 +617,11 @@ export function reconcileCanvasElements(
         }
         if (!front.boundElements || !front.boundElements.some((b: any) => b.id === text.id)) {
           front.boundElements = [{ type: 'text', id: text.id }];
+          hasChanged = true;
+        }
+
+        if (text.scale && (text.scale[0] !== 1 || text.scale[1] !== 1)) {
+          text.scale = [1, 1];
           hasChanged = true;
         }
 
@@ -717,6 +725,11 @@ export function reconcileCanvasElements(
             hasChanged = true;
           }
 
+          if (text.scale && (text.scale[0] !== 1 || text.scale[1] !== 1)) {
+            text.scale = [1, 1];
+            hasChanged = true;
+          }
+
           const isCurrentlyEditingThis = !!(activeEditingTextId && text.id === activeEditingTextId);
           const est = estimateTextDimensions(text.text || text.originalText || '', text.fontSize || 16);
           const effectiveH = Math.max(text.height || 0, est.height);
@@ -779,6 +792,11 @@ export function reconcileCanvasElements(
       }
       if (!primaryContainer.boundElements || !primaryContainer.boundElements.some((b: any) => b.id === primaryText.id)) {
         primaryContainer.boundElements = [{ type: 'text', id: primaryText.id }];
+        hasChanged = true;
+      }
+
+      if (primaryText.scale && (primaryText.scale[0] !== 1 || primaryText.scale[1] !== 1)) {
+        primaryText.scale = [1, 1];
         hasChanged = true;
       }
 
