@@ -1,29 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAIGenerator } from '../context/AIGeneratorContext';
-import { X, Info, Shield, Server, Database, Activity, Layout } from 'lucide-react';
+import { X, Info, Shield, Server, Database, Activity, Layout, Download } from 'lucide-react';
+import { ExportDiagramModal } from '@/components/canvas/export/ExportDiagramModal';
 
 interface ArchitectureExplanationPanelProps {
   onClose: () => void;
+  excalidrawAPI?: any;
 }
 
-export function ArchitectureExplanationPanel({ onClose }: ArchitectureExplanationPanelProps) {
-  const { explanationData } = useAIGenerator();
+export function ArchitectureExplanationPanel({ onClose, excalidrawAPI }: ArchitectureExplanationPanelProps) {
+  const { explanationData, prompt } = useAIGenerator();
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   if (!explanationData) return null;
 
   return (
     <div className="w-96 h-full bg-surface border-l border-primary/10 flex flex-col shadow-xl z-20 transition-all duration-300">
-      <div className="p-5 border-b border-primary/10 flex justify-between items-center bg-transparent sticky top-0">
+      <div className="p-4 border-b border-primary/10 flex justify-between items-center bg-transparent sticky top-0">
         <div className="flex items-center gap-2">
           <Info size={18} className="text-blue-600" />
-          <h2 className="font-heading font-bold text-primary-ink">Architecture Details</h2>
+          <h2 className="font-heading font-bold text-primary-ink text-sm">Architecture Details</h2>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 text-primary/60 hover:text-primary-ink hover:bg-primary/10 rounded-lg transition-colors"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setIsExportOpen(true)}
+            className="flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            title="Export as Mermaid (.mmd) for GitHub"
+          >
+            <Download size={13} />
+            <span>Export</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-primary/60 hover:text-primary-ink hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-[#faf9f6]">
@@ -138,6 +151,17 @@ export function ArchitectureExplanationPanel({ onClose }: ArchitectureExplanatio
         </section>
 
       </div>
+
+      {isExportOpen && (
+        <ExportDiagramModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          excalidrawAPI={excalidrawAPI}
+          projectName={prompt ? prompt.substring(0, 30).replace(/\s+/g, '_') : 'AI_Architecture'}
+          diagramType="System Architecture"
+          workspaceType="ai"
+        />
+      )}
     </div>
   );
 }

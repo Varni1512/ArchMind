@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ShieldAlert, Layers, Zap, Loader2, AlertCircle, X, MessageSquare, Send, User, Bot, Trash2, Save, Check, History } from 'lucide-react';
+import { ShieldAlert, Layers, Zap, Loader2, AlertCircle, X, MessageSquare, Send, User, Bot, Trash2, Save, Check, History, Download } from 'lucide-react';
 import { useHLDAIEvaluation } from '../hooks/useHLDAIEvaluation';
 import { useHLDChat } from '../hooks/useHLDChat';
 import { useHLDTerraform } from '../hooks/useHLDTerraform';
 import { useHLDWorkspace } from '../context/HLDWorkspaceContext';
 import { HLDSavedHistoryPanel } from './HLDSavedHistoryPanel';
+import { ExportDiagramModal } from '@/components/canvas/export/ExportDiagramModal';
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Terminal } from 'lucide-react';
@@ -21,6 +22,7 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
   const [activeTab, setActiveTab] = useState<'evaluation' | 'chat' | 'history'>('evaluation');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Switch back to evaluation when history is loaded
   useEffect(() => {
@@ -177,6 +179,15 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
                 {saveSuccess ? 'Saved' : 'Save'}
               </button>
             )}
+            <button
+              onClick={() => setIsExportOpen(true)}
+              disabled={!excalidrawAPI}
+              title="Export as Mermaid for GitHub, PNG, or SVG"
+              className="bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Download size={15} />
+              <span className="hidden sm:inline">Export</span>
+            </button>
             <button
               onClick={generateTerraform}
               disabled={isGeneratingTerraform || loading || !excalidrawAPI}
@@ -458,6 +469,17 @@ export function HLDAssistantPanel({ excalidrawAPI, onClose }: Props) {
             )}
           </div>
         </div>
+      )}
+
+      {isExportOpen && (
+        <ExportDiagramModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          excalidrawAPI={excalidrawAPI}
+          projectName={currentQuestion?.id ? `HLD_${currentQuestion.id}` : 'HLD_Architecture'}
+          diagramType={diagramType}
+          workspaceType="hld"
+        />
       )}
     </div>
   );

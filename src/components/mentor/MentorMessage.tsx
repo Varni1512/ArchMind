@@ -8,6 +8,7 @@ import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Bot, User, Edit2, FileText } from 'lucide-react';
 import { ChatMessage } from '@/store/useMentorStore';
+import { MermaidViewer } from '@/components/ui/MermaidViewer';
 
 interface MentorMessageProps {
   message: ChatMessage;
@@ -126,8 +127,21 @@ export function MentorMessage({ message, onEdit }: MentorMessageProps) {
                     const codeString = String(children).replace(/\n$/, '');
 
                     if (!inline && match) {
+                      if (language.toLowerCase() === 'mermaid') {
+                        return (
+                          <div className="my-4 not-prose">
+                            <MermaidViewer 
+                              chart={codeString}
+                              title="Architecture Diagram"
+                              showControls={true}
+                              initialMode="preview"
+                            />
+                          </div>
+                        );
+                      }
+
                       return (
-                        <div className="relative group mt-4 mb-4 rounded-xl overflow-hidden shadow-sm text-left">
+                        <div className="relative group mt-4 mb-4 rounded-xl overflow-hidden shadow-sm text-left not-prose">
                           <div className="bg-[#1E1E1E] text-white/50 text-xs px-4 py-2 flex justify-between items-center border-b border-black/30">
                             <span>{language}</span>
                             <button 

@@ -13,11 +13,13 @@ import { CostEstimatorWidget } from './components/CostEstimatorWidget';
 import { NodePropertiesMenu } from './components/NodePropertiesMenu';
 import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState, areElementsEqual } from '@/lib/storage/canvasPersistence';
 import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
-import { Sparkles, X, BookOpen, CloudCheck, Loader2 } from 'lucide-react';
+import { Sparkles, X, BookOpen, CloudCheck, Loader2, Download } from 'lucide-react';
+import { ExportDiagramModal } from '@/components/canvas/export/ExportDiagramModal';
 
 function WorkspaceContent() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isExplorerOpen, setIsExplorerOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const hasRestoredRef = useRef(false);
@@ -201,6 +203,19 @@ function WorkspaceContent() {
         <NodePropertiesMenu excalidrawAPI={excalidrawAPI} />
         <CostEstimatorWidget excalidrawAPI={excalidrawAPI} />
 
+        {/* Bottom Floating Action Bar for Export */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] px-3 py-1.5 flex items-center gap-2 z-20">
+          <button 
+            onClick={() => setIsExportOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 transition-colors text-purple-700 cursor-pointer text-sm font-semibold shadow-xs"
+            title="Export as Mermaid (.mmd), GitHub Markdown (.md), PNG, or SVG"
+          >
+            <Download size={16} />
+            <span>Export Diagram</span>
+            <span className="text-[10px] bg-purple-200 text-purple-800 px-1.5 py-0.2 rounded font-mono font-bold">.mmd</span>
+          </button>
+        </div>
+
         {/* Auto-Save Status Badge */}
         {saveStatus !== 'idle' && (
           <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-full shadow-sm text-xs font-medium text-gray-700 transition-all duration-300 pointer-events-none select-none">
@@ -216,6 +231,17 @@ function WorkspaceContent() {
               </>
             )}
           </div>
+        )}
+
+        {isExportOpen && (
+          <ExportDiagramModal
+            isOpen={isExportOpen}
+            onClose={() => setIsExportOpen(false)}
+            excalidrawAPI={excalidrawAPI}
+            projectName={activeQuestionId ? `HLD_${activeQuestionId}` : 'HLD_Architecture'}
+            diagramType={activeDiagramType || 'System Architecture'}
+            workspaceType="hld"
+          />
         )}
       </div>
 

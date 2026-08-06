@@ -15,14 +15,8 @@ export const metadata: Metadata = {
   ],
 };
 
+import { CanvasPageClient } from './CanvasPageClient';
+
 export default function CanvasPage() {
-  return (
-    <div className="absolute inset-0 bg-[#faf9f6] overflow-hidden">
-      <ExcalidrawWrapper 
-        storageKey={STORAGE_KEYS.BLANK_CANVAS} 
-        autoSave={true} 
-        showSaveIndicator={true}
-      />
-    </div>
-  );
+  return <CanvasPageClient />;
 }

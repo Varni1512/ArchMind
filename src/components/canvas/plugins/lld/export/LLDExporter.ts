@@ -86,4 +86,35 @@ export class LLDExporter {
       console.error("Failed to export SVG", e);
     }
   }
+
+  static async exportToMermaid(excalidrawAPI: any, projectName: string, diagramType: string = 'Class Diagram') {
+    if (!excalidrawAPI) return;
+    try {
+      const { ASTEngine } = await import('../ast/ASTEngine');
+      const { generateMermaidFromLLDAST, downloadMermaidFile } = await import('@/lib/export/mermaidExporter');
+      const elements = excalidrawAPI.getSceneElements();
+      const ast = ASTEngine.parseFromCanvas(elements);
+      const mermaidCode = generateMermaidFromLLDAST(ast, diagramType);
+      const filename = `${projectName.replace(/\s+/g, '_')}_${diagramType.replace(/\s+/g, '_')}.mmd`;
+      downloadMermaidFile(mermaidCode, filename);
+    } catch (e) {
+      console.error("Failed to export Mermaid", e);
+    }
+  }
+
+  static async exportToMarkdown(excalidrawAPI: any, projectName: string, diagramType: string = 'Class Diagram') {
+    if (!excalidrawAPI) return;
+    try {
+      const { ASTEngine } = await import('../ast/ASTEngine');
+      const { generateMermaidFromLLDAST, formatAsGitHubMarkdown, downloadMarkdownFile } = await import('@/lib/export/mermaidExporter');
+      const elements = excalidrawAPI.getSceneElements();
+      const ast = ASTEngine.parseFromCanvas(elements);
+      const mermaidCode = generateMermaidFromLLDAST(ast, diagramType);
+      const markdown = formatAsGitHubMarkdown(mermaidCode, `${projectName} - ${diagramType}`);
+      const filename = `${projectName.replace(/\s+/g, '_')}_${diagramType.replace(/\s+/g, '_')}.md`;
+      downloadMarkdownFile(markdown, filename);
+    } catch (e) {
+      console.error("Failed to export Markdown", e);
+    }
+  }
 }
