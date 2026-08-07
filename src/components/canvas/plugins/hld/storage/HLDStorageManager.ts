@@ -1,4 +1,3 @@
-import { SavedDiagram, DiagramMetadata } from '../types';
 import { 
   STORAGE_KEYS, 
   saveCanvasData, 
@@ -6,9 +5,9 @@ import {
   clearCanvasData, 
   sanitizeAppState 
 } from '@/lib/storage/canvasPersistence';
+import { SavedDiagramManager, SavedDiagramItem } from '@/lib/storage/savedDiagramManager';
 
 export class HLDStorageManager {
-  private static DIAGRAMS_KEY = STORAGE_KEYS.HLD_DIAGRAMS;
   private static AUTOSAVE_KEY = STORAGE_KEYS.HLD_AUTOSAVE;
 
   static saveDiagram(
@@ -17,47 +16,41 @@ export class HLDStorageManager {
     diagramType: any,
     linkedQuestionId: string | null,
     elements: any[],
-    appState: any
-  ): SavedDiagram {
-    const diagrams = this.getAllDiagrams();
-    
+    appState: any,
+    previewImage?: string
+  ): SavedDiagramItem {
+    const diagrams = SavedDiagramManager.getAllDiagrams('hld');
     const existing = diagrams[id];
-    const version = existing ? existing.metadata.version + 1 : 1;
-    const createdAt = existing ? existing.metadata.createdAt : Date.now();
+    const now = Date.now();
 
-    const metadata: DiagramMetadata = {
-      projectName,
-      diagramType,
+    const record: SavedDiagramItem = {
+      id,
+      name: projectName,
+      workspaceType: 'hld',
+      diagramType: diagramType || 'System Architecture',
       linkedQuestionId,
-      version,
-      createdAt,
-      updatedAt: Date.now()
+      elements,
+      appState: sanitizeAppState(appState),
+      previewImage: previewImage || existing?.previewImage,
+      createdAt: existing ? existing.createdAt : now,
+      updatedAt: now,
+      version: existing ? existing.version + 1 : 1,
     };
 
-    const saved: SavedDiagram = { 
-      id, 
-      metadata, 
-      elements, 
-      appState: sanitizeAppState(appState) 
-    };
-    diagrams[id] = saved;
-    
-    saveCanvasData(this.DIAGRAMS_KEY, diagrams);
-    return saved;
+    diagrams[id] = record;
+    saveCanvasData(STORAGE_KEYS.HLD_DIAGRAMS, diagrams);
+    return record;
   }
 
-  static getAllDiagrams(): Record<string, SavedDiagram> {
-    const data = loadCanvasData<Record<string, SavedDiagram>>(this.DIAGRAMS_KEY);
-    return data || {};
+  static getAllDiagrams(): Record<string, SavedDiagramItem> {
+    return SavedDiagramManager.getAllDiagrams('hld');
   }
 
   static deleteDiagram(id: string) {
-    const diagrams = this.getAllDiagrams();
-    delete diagrams[id];
-    saveCanvasData(this.DIAGRAMS_KEY, diagrams);
+    return SavedDiagramManager.deleteDiagram('hld', id);
   }
 
-  static autoSave(elements: any[], appState: any, metadata: Partial<DiagramMetadata> = {}) {
+  static autoSave(elements: any[], appState: any, metadata: any = {}) {
     saveCanvasData(this.AUTOSAVE_KEY, { 
       elements, 
       appState: sanitizeAppState(appState), 
@@ -70,7 +63,7 @@ export class HLDStorageManager {
     return loadCanvasData<{
       elements: any[];
       appState: any;
-      metadata: Partial<DiagramMetadata>;
+      metadata: any;
       timestamp: number;
     }>(this.AUTOSAVE_KEY);
   }
@@ -79,3 +72,4 @@ export class HLDStorageManager {
     clearCanvasData(this.AUTOSAVE_KEY);
   }
 }
+

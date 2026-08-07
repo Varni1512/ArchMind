@@ -13,13 +13,23 @@ import { CostEstimatorWidget } from './components/CostEstimatorWidget';
 import { NodePropertiesMenu } from './components/NodePropertiesMenu';
 import { CanvasDebouncedSaver, STORAGE_KEYS, sanitizeAppState, areElementsEqual } from '@/lib/storage/canvasPersistence';
 import { safeRestoreElements } from '@/lib/canvas/elementOrdering';
-import { Sparkles, X, BookOpen, CloudCheck, Loader2, Download } from 'lucide-react';
+import { Sparkles, X, BookOpen, CloudCheck, Loader2, Download, Save, FolderOpen } from 'lucide-react';
 import { ExportDiagramModal } from '@/components/canvas/export/ExportDiagramModal';
+import { SaveDiagramModal } from '@/components/canvas/storage/SaveDiagramModal';
+import { DiagramHistoryModal } from '@/components/canvas/storage/DiagramHistoryModal';
+import { SavedDiagramManager, SavedDiagramItem } from '@/lib/storage/savedDiagramManager';
 
 function WorkspaceContent() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isExplorerOpen, setIsExplorerOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isSaveOpen, setIsSaveOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
+  const [currentDiagramName, setCurrentDiagramName] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState<number>(0);
+
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const hasRestoredRef = useRef(false);
@@ -39,6 +49,38 @@ function WorkspaceContent() {
   const handleAPI = useCallback((api: any) => {
     setExcalidrawAPI(api);
   }, []);
+
+  // Sync count of saved diagrams for HLD
+  useEffect(() => {
+    const updateCount = () => {
+      const list = SavedDiagramManager.getDiagramsList('hld');
+      setSavedCount(list.length);
+    };
+    updateCount();
+    const unsubscribe = SavedDiagramManager.subscribe(updateCount);
+    return () => unsubscribe();
+  }, []);
+
+  const handleLoadDiagram = (diagram: SavedDiagramItem) => {
+    setCurrentDiagramId(diagram.id);
+    setCurrentDiagramName(diagram.name);
+    if (diagram.diagramType) {
+      setActiveDiagramType(diagram.diagramType as any);
+    }
+  };
+
+  const handleNewCanvas = () => {
+    if (excalidrawAPI) {
+      excalidrawAPI.resetScene();
+    }
+    setCurrentDiagramId(null);
+    setCurrentDiagramName(null);
+  };
+
+  const handleSaveSuccess = (savedItem: SavedDiagramItem) => {
+    setCurrentDiagramId(savedItem.id);
+    setCurrentDiagramName(savedItem.name);
+  };
 
   // Initialize debounced auto-saver
   useEffect(() => {
@@ -203,15 +245,40 @@ function WorkspaceContent() {
         <NodePropertiesMenu excalidrawAPI={excalidrawAPI} />
         <CostEstimatorWidget excalidrawAPI={excalidrawAPI} />
 
-        {/* Bottom Floating Action Bar for Export */}
+        {/* Bottom Floating Action Bar */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] px-3 py-1.5 flex items-center gap-2 z-20">
           <button 
+            onClick={() => setIsSaveOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 transition-colors text-white cursor-pointer text-xs font-semibold shadow-xs"
+            title="Save HLD Diagram with custom name"
+          >
+            <Save size={14} />
+            <span>Save Diagram</span>
+          </button>
+
+          <button 
+            onClick={() => setIsHistoryOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-primary/5 border border-primary/15 transition-colors text-primary-ink cursor-pointer text-xs font-semibold shadow-xs"
+            title="View and restore saved HLD diagrams"
+          >
+            <FolderOpen size={14} className="text-purple-600" />
+            <span>Saved Diagrams</span>
+            {savedCount > 0 && (
+              <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold">
+                {savedCount}
+              </span>
+            )}
+          </button>
+
+          <div className="w-[1px] h-4 bg-gray-200" />
+
+          <button 
             onClick={() => setIsExportOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 transition-colors text-purple-700 cursor-pointer text-sm font-semibold shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 transition-colors text-purple-700 cursor-pointer text-xs font-semibold shadow-xs"
             title="Export as Mermaid (.mmd), GitHub Markdown (.md), PNG, or SVG"
           >
-            <Download size={16} />
-            <span>Export Diagram</span>
+            <Download size={14} />
+            <span>Export</span>
             <span className="text-[10px] bg-purple-200 text-purple-800 px-1.5 py-0.2 rounded font-mono font-bold">.mmd</span>
           </button>
         </div>
@@ -233,12 +300,43 @@ function WorkspaceContent() {
           </div>
         )}
 
+        {/* Save Diagram Modal */}
+        {isSaveOpen && (
+          <SaveDiagramModal
+            isOpen={isSaveOpen}
+            onClose={() => setIsSaveOpen(false)}
+            excalidrawAPI={excalidrawAPI}
+            workspaceType="hld"
+            diagramType={activeDiagramType || 'System Architecture'}
+            linkedQuestionId={activeQuestionId}
+            currentDiagramId={currentDiagramId}
+            currentDiagramName={currentDiagramName}
+            onSaveSuccess={handleSaveSuccess}
+            onOpenHistory={() => setIsHistoryOpen(true)}
+          />
+        )}
+
+        {/* Saved History Modal */}
+        {isHistoryOpen && (
+          <DiagramHistoryModal
+            isOpen={isHistoryOpen}
+            onClose={() => setIsHistoryOpen(false)}
+            excalidrawAPI={excalidrawAPI}
+            currentWorkspace="hld"
+            activeDiagramId={currentDiagramId}
+            onLoadDiagram={handleLoadDiagram}
+            onNewDiagram={handleNewCanvas}
+            onOpenSaveModal={() => setIsSaveOpen(true)}
+          />
+        )}
+
+        {/* Export Modal */}
         {isExportOpen && (
           <ExportDiagramModal
             isOpen={isExportOpen}
             onClose={() => setIsExportOpen(false)}
             excalidrawAPI={excalidrawAPI}
-            projectName={activeQuestionId ? `HLD_${activeQuestionId}` : 'HLD_Architecture'}
+            projectName={currentDiagramName ? currentDiagramName.replace(/\s+/g, '_') : (activeQuestionId ? `HLD_${activeQuestionId}` : 'HLD_Architecture')}
             diagramType={activeDiagramType || 'System Architecture'}
             workspaceType="hld"
           />
@@ -258,6 +356,8 @@ function WorkspaceContent() {
     </div>
   );
 }
+
+
 
 export function HLDWorkspaceLayout() {
   return (

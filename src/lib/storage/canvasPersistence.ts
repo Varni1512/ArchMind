@@ -8,6 +8,7 @@ import { normalizeFractionalIndices } from '@/lib/canvas/elementOrdering';
 
 export const STORAGE_KEYS = {
   BLANK_CANVAS: 'archmind_blank_canvas_autosave',
+  BLANK_CANVAS_DIAGRAMS: 'archmind_blank_canvas_diagrams',
   LLD_AUTOSAVE: 'archmind_lld_autosave',
   HLD_AUTOSAVE: 'archmind_hld_autosave',
   AI_SESSION: 'archmind_ai_generator_session',
